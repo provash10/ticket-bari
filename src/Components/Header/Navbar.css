@@ -1,0 +1,12 @@
+.menu a.active {
+    text-decoration: underline;
+    color: blue;
+    
+}
+/* .menu a.active:hover {
+    color: green;
+    font-weight: bold;
+} */
+ .menu a:hover {
+    color: green;
+}
