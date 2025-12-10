@@ -10,13 +10,9 @@ const AuthLayout = () => {
             <Navbar />
 
             <div className="flex w-full">
-
-                {/* Left Image Section (Optional) */}
                 {/* <div className="flex-1">
                     <img src={showAuthImg} alt="" className="w-full h-full object-cover" />
                 </div> */}
-
-                {/* Right Content / Form */}
                 <div className="flex-1">
                     <Outlet />
                 </div>

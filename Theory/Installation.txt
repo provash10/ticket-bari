@@ -6,4 +6,4 @@ Installation
 5. npm i react-icons
 6. npm install react-hook-form 
 7. npm install firebase
-
+8. axios - npm i axios  // for imagebb
