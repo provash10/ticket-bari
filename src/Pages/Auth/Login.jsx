@@ -1,17 +1,22 @@
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import useAuth from '../../Hooks/useAuth';
-import { Link } from 'react-router';
+import { Link, useLocation, useNavigate } from 'react-router';
 import GoogleLogin from './GoogleLogin';
 
 const Login = () => {
     const { register, handleSubmit, formState: { errors } } = useForm();
     const { signInUser } = useAuth();
+    const navigate = useNavigate();
+    const location = useLocation();
+     console.log('in the login page', location);
+
 
     const handleLogin = (data) => {
         signInUser(data.email, data.password)
             .then(result => {
                 console.log(result.user);
+                navigate(location?.state || '/');
             })
             .catch(error => {
                 console.log(error);
@@ -79,7 +84,7 @@ const Login = () => {
                             </button>
 
                         </fieldset>
-                        <p className='text-sm font-bold mt-4'>Don't Have An Account ? - Ticket Bari. <Link to='/register' className='text-blue-800 hover:text-green-500'>Please Register</Link></p>
+                        <p className='text-sm font-bold mt-4'>Don't Have An Account ? - Ticket Bari. <Link state={location.state} to='/auth/register' className='text-blue-800 hover:text-green-500'>Please Register</Link></p>
                     </form>
                     <GoogleLogin></GoogleLogin>
                 </div>

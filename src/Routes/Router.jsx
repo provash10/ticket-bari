@@ -5,19 +5,24 @@ import AuthLayout from "../Layouts/AuthLayout";
 import Login from "../Pages/Auth/Login";
 import Register from "../Pages/Auth/Register";
 import AllTickets from "../Pages/Tickets/AllTickets";
+import ErrorPage from "../Pages/ErrorPages/ErrorPage";
+
+
+
 
 
 export const router = createBrowserRouter([
     {
         path: ("/"),
         element: <MainLayout></MainLayout>,
+        errorElement: <ErrorPage></ErrorPage>,
         children: [
             {
                 index: true,
                 element: <Home></Home>,
             },
             {
-                path:'/all-tickets',
+                path:'all-tickets',
                 element: <AllTickets></AllTickets>,
             },
         ]
@@ -25,17 +30,16 @@ export const router = createBrowserRouter([
 
     // AuthLayout
     {
-        path:'/',
-        Component: AuthLayout,
+        path:'/auth',
+        element: <AuthLayout></AuthLayout>,
         children:[
             {
-                path: '/login',
-                Component: Login,
+                path: 'login',
+                element:<Login></Login>
             },
             {
-                path: '/register',
-                Component: Register,
-
+                path: 'register',
+                element:<Register></Register>
             },
         ]
     }

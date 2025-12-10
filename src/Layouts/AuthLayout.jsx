@@ -1,5 +1,5 @@
 import React from 'react';
-import showAuthImg from '../assets/showauthimg.png'
+// import showAuthImg from '../assets/showauthimg.png'
 import { Outlet } from 'react-router';
 import Navbar from '../Components/Header/Navbar';
 

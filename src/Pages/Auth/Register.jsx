@@ -1,13 +1,17 @@
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import useAuth from '../../Hooks/useAuth';
-import { Link } from 'react-router';
+import { Link, useLocation, useNavigate } from 'react-router';
 import GoogleLogin from './GoogleLogin';
 import axios from 'axios';
 
 const Register = () => {
     const { register, handleSubmit, formState: { errors } } = useForm();
     const { registerUser, updateUserProfile } = useAuth();
+    const navigate = useNavigate();
+    const location = useLocation();
+     console.log('in the register page', location);
+
 
     const handleRegistration = (data) => {
         // console.log('after register', data);
@@ -26,7 +30,7 @@ const Register = () => {
                 axios.post(image_API_URL, formData)
                     .then(res => {
                         console.log('after imageupload', res.data.data.url);
-                        
+
                         //update user profile to firebase
                         const userProfile = {
                             displayName: data.name,
@@ -35,10 +39,12 @@ const Register = () => {
                         updateUserProfile(userProfile)
                             .then(() => {
                                 console.log('User Profile Updated')
-                                    .catch(error => {
+                                navigate(location?.state || '/');
+                                    
+                            })
+                            .catch(error => {
                                         console.log(error);
                                     });
-                            })
                     })
 
             })
@@ -137,7 +143,7 @@ const Register = () => {
                             </button>
 
                         </fieldset>
-                        <p className='text-sm font-bold mt-4'>ALready Have An Account ? - Ticket Bari. <Link to='/login' className='text-blue-800 hover:text-green-500'>Login Now</Link></p>
+                        <p className='text-sm font-bold mt-4'>ALready Have An Account ? - Ticket Bari. <Link state={location.state} to='/auth/login' className='text-blue-800 hover:text-green-500'>Login Now</Link></p>
                     </form>
                     <GoogleLogin></GoogleLogin>
                 </div>
