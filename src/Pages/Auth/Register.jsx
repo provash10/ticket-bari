@@ -1,16 +1,20 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import useAuth from '../../Hooks/useAuth';
 import { Link, useLocation, useNavigate } from 'react-router';
 import GoogleLogin from './GoogleLogin';
 import axios from 'axios';
+import { AiFillEye, AiFillEyeInvisible } from 'react-icons/ai';
 
 const Register = () => {
     const { register, handleSubmit, formState: { errors } } = useForm();
     const { registerUser, updateUserProfile } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
-     console.log('in the register page', location);
+    console.log('in the register page', location);
+
+    const [showPassword, setShowPassword] = useState(false);
+
 
 
     const handleRegistration = (data) => {
@@ -24,7 +28,7 @@ const Register = () => {
                 //store data image in form data
                 const formData = new FormData();
                 formData.append('image', profileImg);
-                
+
                 //send the photo to store and get the url
                 const image_API_URL = `https://api.imgbb.com/1/upload?key=${import.meta.env.VITE_image_host_key}`
                 axios.post(image_API_URL, formData)
@@ -40,11 +44,11 @@ const Register = () => {
                             .then(() => {
                                 console.log('User Profile Updated')
                                 navigate(location?.state || '/');
-                                    
+
                             })
                             .catch(error => {
-                                        console.log(error);
-                                    });
+                                console.log(error);
+                            });
                     })
 
             })
@@ -113,7 +117,7 @@ const Register = () => {
 
                             {/* Password */}
                             <label className="label mt-3">Password</label>
-                            <input
+                            {/* <input
                                 type="password"
                                 {...register("password", {
                                     required: true,
@@ -122,7 +126,26 @@ const Register = () => {
                                 })}
                                 className="input w-full"
                                 placeholder="Password"
-                            />
+                            /> */}
+                            <div className='relative'>
+                                <input
+                                    // type="password"
+                                    type={showPassword ? "text" : "password"}
+                                    {...register("password", {
+                                        required: true,
+                                        minLength: 8,
+                                        pattern: /^(?=.*[a-z])(?=.*[A-Z]).{6,}$/
+                                    })}
+                                    className="input w-full"
+                                    placeholder="Password"
+                                />
+                                <span
+                                    className="absolute right-2 top-2.5 cursor-pointer text-gray-600"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                >
+                                    {showPassword ? <AiFillEyeInvisible size={20} /> : <AiFillEye size={20} />}
+                                </span>
+                            </div>
 
                             {errors.password?.type === "required" &&
                                 <p className="text-red-600">Password is Required</p>

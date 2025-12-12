@@ -1,15 +1,18 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import useAuth from '../../Hooks/useAuth';
 import { Link, useLocation, useNavigate } from 'react-router';
 import GoogleLogin from './GoogleLogin';
+import { AiFillEye, AiFillEyeInvisible } from 'react-icons/ai';
 
 const Login = () => {
     const { register, handleSubmit, formState: { errors } } = useForm();
     const { signInUser } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
-     console.log('in the login page', location);
+    console.log('in the login page', location);
+
+    const [showPassword, setShowPassword] = useState(false);
 
 
     const handleLogin = (data) => {
@@ -26,15 +29,15 @@ const Login = () => {
     return (
         <div className="min-h-screen flex items-center justify-center bg-gray-100">
 
-           
+
             <div className="w-full bg-white shadow-xl grid grid-cols-1 md:grid-cols-2">
 
-                
+
                 <div className="hidden md:flex items-center justify-center p-6 bg-gray-200">
                     <h3 className="text-3xl font-semibold text-center">Welcome Back</h3>
                 </div>
 
-          
+
                 <div className="p-8 flex flex-col justify-center items-center h-full">
                     <h2 className="text-3xl font-semibold text-center">Welcome To Ticket Bari</h2>
                     <p className="text-xl font-semibold text-center mb-6">Please Login...</p>
@@ -54,8 +57,10 @@ const Login = () => {
                             }
 
                             <label className="label mt-3">Password</label>
-                            <input
-                                type="password"
+                            <div className='relative'>
+                                <input
+                                // type="password"
+                                type={showPassword ? "text" : "password"}
                                 {...register("password", {
                                     required: true,
                                     minLength: 8,
@@ -64,6 +69,13 @@ const Login = () => {
                                 className="input w-full"
                                 placeholder="Password"
                             />
+                            <span
+                                className="absolute right-2 top-2.5 cursor-pointer text-gray-600"
+                                onClick={() => setShowPassword(!showPassword)}
+                            >
+                                {showPassword ? <AiFillEyeInvisible size={20} /> : <AiFillEye size={20} />}
+                            </span>
+                            </div>
 
                             {errors.password?.type === "required" &&
                                 <p className="text-red-600">Password is Required</p>

@@ -49,10 +49,18 @@ const Navbar = () => {
       {links}
     </ul>
   </div>
-  <div className="navbar-end">
+  <div className="navbar-end flex items-center gap-2">
     {/* <a className="btn">Login</a> */}
     {
-      user?  <a onClick={handleLogOut} className="btn">Logout</a> :  <Link to='/auth/login' className="btn">Login</Link>
+      user? <>
+      {user.photoURL && (
+        <img 
+          src={user.photoURL} 
+          alt="User Profile" 
+          className="w-8 h-8 rounded-full border border-gray-700"
+        />
+      )} <a onClick={handleLogOut} className="btn">Logout</a></>
+       :  <Link to='/auth/login' className="btn">Login</Link>
     }
   </div>
 </div>
