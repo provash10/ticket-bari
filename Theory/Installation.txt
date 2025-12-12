@@ -9,6 +9,7 @@ Installation
 8. axios - npm i axios  // for imagebb
 9. npm i @tanstack/react-query
 10. react-hot-toast
+11. lottie-react *** npm i lottie-react
 
 server
 1. npm i express cors dotenv mongodb
