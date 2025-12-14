@@ -1,15 +1,53 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'react-hot-toast';
+import useAuth from '../../../Hooks/useAuth';
+import { imageUpload } from '../../../Utils/index'; 
+
 
 const AddTicket = () => {
-    const { register, handleSubmit, formState: { errors } } = useForm();
+    const { user } = useAuth();
+    // console.log(vendor);
+    const { register, handleSubmit, watch, formState: { errors } } = useForm();
     const [loading, setLoading] = useState(false);
 
-    const onSubmit = (data) => {
-        console.log(data);
-        toast.success("Ticket data captured (UI only)!");
-    };
+    const onSubmit = async (data) => {
+        try {
+            setLoading(true)
+
+            const imageFile = data.image[0]
+
+            const imageUrl = await imageUpload (imageFile)
+
+            const ticketData = {
+                title: data.title,
+                from: data.from,
+                to: data.to,
+                transportType: data.transportType,
+                price: Number(data.price),
+                quantity: Number(data.quantity),
+                totalPrice:
+                    Number(data.price) * Number(data.quantity),
+                departure: data.departure,
+                perks: data.perks || [],
+                image: imageUrl,
+                vendor: {
+                    image: user?.imageUrl,
+                    name: user?.displayName,
+                    email: user?.email,
+                },
+            }
+
+            console.log(ticketData)
+            toast.success("Add Ticket Successful")
+        } catch (error) {
+            console.log(error)
+            toast.error("Image upload failed")
+        } finally {
+            setLoading(false)
+        }
+    }
+
 
     return (
         <div className="max-w-4xl mx-auto p-6 bg-white shadow-md rounded-lg mt-6">
@@ -72,7 +110,10 @@ const AddTicket = () => {
                         <label className="block font-semibold mb-1">Price (per unit)</label>
                         <input
                             type="number"
-                            {...register("price", { required: true, min: 0 })}
+                            {...register("price", {
+                                required: 'Price is required',
+                                min: { value: 0, message: 'Price must be positive' },
+                            })}
                             className="input w-full border border-gray-300 rounded p-2"
                             placeholder="Price"
                         />
@@ -80,17 +121,34 @@ const AddTicket = () => {
                     </div>
                 </div>
 
-                {/* Ticket Quantity & Departure - date/time */}
+                {/* Ticket Quantity & departure - date/time */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label className="block font-semibold mb-1">Ticket Quantity</label>
                         <input
                             type="number"
-                            {...register("quantity", { required: true, min: 1 })}
+                            {...register("quantity", {
+                                required: 'Quantity is required',
+                                min: { value: 1, message: 'Quantity must be at least 1' },
+                            })}
                             className="input w-full border border-gray-300 rounded p-2"
                             placeholder="Total tickets available"
                         />
                         {errors.quantity && <p className="text-red-600">Quantity is required</p>}
+                    </div>
+
+                    {/* total price */}
+                    <div>
+                        <label className="block font-semibold mb-1">Total Price</label>
+                        <input
+                            type="number"
+                            value={
+                                (Number(watch("price")) || 0) *
+                                (Number(watch("quantity")) || 0)
+                            }
+                            className="input w-full border border-gray-300 rounded p-2 bg-gray-100"
+                            disabled
+                        />
                     </div>
                     <div>
                         <label className="block font-semibold mb-1">Departure Date & Time</label>
@@ -103,7 +161,7 @@ const AddTicket = () => {
                     </div>
                 </div>
 
-                {/* Perks (checkboxes) */}
+                {/* perks*/}
                 <div>
                     <label className="block font-semibold mb-1">Perks</label>
                     <div className="flex flex-wrap gap-4">
@@ -127,30 +185,58 @@ const AddTicket = () => {
                 </div>
 
                 {/* image */}
-                <div>
+                {/* <div>
                     <label className="block font-semibold mb-1">Image URL</label>
                     <input
                         type="text"
-                        {...register("image", { required: true })}
+                        {...register("image", {
+                            required: 'Image is required',
+                        })}
                         className="input w-full border border-gray-300 rounded p-2"
                         placeholder="Enter image URL"
                     />
                     {errors.image && <p className="text-red-600">Image URL is required</p>}
+                </div> */}
+
+                {/* image */}
+                <div className="p-4 w-full rounded-lg">
+                    <label className="block font-semibold mb-2">Ticket Image</label>
+
+                    <div className="border-4 border-dotted border-gray-300 rounded-lg py-6 text-center">
+                        <label>
+                            <input
+                                type="file"
+                                accept="image/*"
+                                hidden
+                                {...register("image", { required: "Image is required" })}
+                            />
+                            <div className="inline-block bg-blue-500 text-white px-4 py-2 rounded cursor-pointer">
+                                Upload Image
+                            </div>
+                        </label>
+
+                        {errors.image && (
+                            <p className="text-red-600 text-sm mt-2">
+                                {errors.image.message}
+                            </p>
+                        )}
+                    </div>
                 </div>
+
 
                 {/* vendor  */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label className="block font-semibold mb-1">Vendor Name</label>
-                        <input type="text" className="input w-full border border-gray-300 rounded p-2 bg-gray-100" disabled value="Vendor Name" />
+                        <input value={user?.displayName} disabled type="text" className="input w-full border border-gray-300 rounded p-2 bg-gray-100" disabled value="Vendor Name" />
                     </div>
                     <div>
                         <label className="block font-semibold mb-1">Vendor Email</label>
-                        <input type="text" className="input w-full border border-gray-300 rounded p-2 bg-gray-100" disabled value="vendor@example.com" />
+                        <input value={user?.email} disabled type="text" className="input w-full border border-gray-300 rounded p-2 bg-gray-100" disabled value="vendor@example.com" />
                     </div>
                 </div>
 
-                
+
                 <div className="text-center mt-4">
                     <button type="submit" className="btn btn-primary w-full">
                         {loading ? "Adding..." : "Add Ticket"}
