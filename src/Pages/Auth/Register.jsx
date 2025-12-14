@@ -5,9 +5,11 @@ import { Link, useLocation, useNavigate } from 'react-router';
 import GoogleLogin from './GoogleLogin';
 import axios from 'axios';
 import { AiFillEye, AiFillEyeInvisible } from 'react-icons/ai';
+import toast from 'react-hot-toast';
 
 const Register = () => {
     const { register, handleSubmit, formState: { errors } } = useForm();
+    console.log(errors);
     const { registerUser, updateUserProfile } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
@@ -17,45 +19,76 @@ const Register = () => {
 
 
 
-    const handleRegistration = (data) => {
-        // console.log('after register', data);
-        // console.log('after register', data.photo[0]);
+    // const handleRegistration = (data) => {
+    //     console.log('after register', data);
+    //     // console.log('after register', data.photo[0]);
 
-        const profileImg = data.photo[0];
-        registerUser(data.email, data.password)
-            .then(result => {
-                console.log(result.user);
-                //store data image in form data
-                const formData = new FormData();
-                formData.append('image', profileImg);
+    //     const profileImg = data.photo[0];
+    //     registerUser(data.email, data.password)
+    //         .then(result => {
+    //             console.log(result.user);
+    //             //store data image in form data
+    //             const formData = new FormData();
+    //             formData.append('image', profileImg);
 
-                //send the photo to store and get the url
-                const image_API_URL = `https://api.imgbb.com/1/upload?key=${import.meta.env.VITE_image_host_key}`
-                axios.post(image_API_URL, formData)
-                    .then(res => {
-                        console.log('after imageupload', res.data.data.url);
+    //             //send the photo to store and get the url
+    //             const image_API_URL = `https://api.imgbb.com/1/upload?key=${import.meta.env.VITE_image_host_key}`
+    //             axios.post(image_API_URL, formData)
+    //                 .then(res => {
+    //                     console.log('after imageupload', res.data.data.url);
 
-                        //update user profile to firebase
-                        const userProfile = {
-                            displayName: data.name,
-                            photoURL: res.data.data.url
-                        }
-                        updateUserProfile(userProfile)
-                            .then(() => {
-                                console.log('User Profile Updated')
-                                navigate(location?.state || '/');
+    //                     //update user profile to firebase
+    //                     const userProfile = {
+    //                         displayName: data.name,
+    //                         // email: data.email,
+    //                         photoURL: res.data.data.url
+    //                     }
+    //                     updateUserProfile(userProfile)
+    //                         .then(() => {
+    //                             console.log('User Profile Updated')
+    //                             navigate(location?.state || '/');
+    //                             toast.success('Signup Successful')
 
-                            })
-                            .catch(error => {
-                                console.log(error);
-                            });
-                    })
+    //                         })
+    //                         .catch(error => {
+    //                             console.log(error);
+    //                         });
+    //                 })
 
-            })
-            .catch(error => {
-                console.log(error);
-            });
-    };
+    //         })
+    //         .catch(error => {
+    //             console.log(error);
+    //         });
+    // };
+
+    const handleRegistration = async (data) => {
+  try {
+    const result = await registerUser(data.email, data.password);
+    console.log(result.user);
+
+    const profileImg = data.photo[0];
+
+    const formData = new FormData();
+    formData.append('image', profileImg);
+
+    const image_API_URL = `https://api.imgbb.com/1/upload?key=${import.meta.env.VITE_image_host_key}`;
+    const res = await axios.post(image_API_URL, formData);
+
+    const imageURL = res.data.data.url;
+
+    await updateUserProfile({
+      displayName: data.name,
+      photoURL: imageURL
+    });
+
+    toast.success('Registration Successful !!');
+    navigate(location?.state || '/');
+
+  } catch (error) {
+    console.log(error);
+    toast.error('Registration Failed !!');
+  }
+};
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-gray-100">
@@ -80,10 +113,12 @@ const Register = () => {
                             {/* name */}
                             <label className="label">Name</label>
                             <input
+                                name='name'
                                 type="text"
                                 {...register("name", { required: true, minLength: 5 })}
                                 className="input w-full"
                                 placeholder="Your Name"
+                                id='name'
                             />
                             {errors.name?.type === "required" &&
                                 <p className="text-red-700">Name is required</p>
@@ -91,13 +126,16 @@ const Register = () => {
                             {errors.name?.type === "minLength" &&
                                 <p className="text-red-600">At least 5 characters required</p>
                             }
+
                             {/* photo */}
                             <label className="label">Photo</label>
                             <input
+                                name='photo'
                                 type="file"
                                 {...register("photo", { required: true })}
                                 className="file-input w-full"
                                 placeholder="Your Photo"
+                                id='photo'
                             />
                             {errors.photo?.type === "required" &&
                                 <p className="text-red-700">Photo is required</p>
@@ -106,9 +144,11 @@ const Register = () => {
                             {/* Email */}
                             <label className="label">Email</label>
                             <input
+                                name='email'
                                 type="email"
                                 {...register("email", { required: true })}
                                 className="input w-full"
+                                id='email'
                                 placeholder="Email"
                             />
                             {errors.email?.type === "required" &&
@@ -129,13 +169,18 @@ const Register = () => {
                             /> */}
                             <div className='relative'>
                                 <input
+
                                     // type="password"
                                     type={showPassword ? "text" : "password"}
                                     {...register("password", {
                                         required: true,
                                         minLength: 8,
-                                        pattern: /^(?=.*[a-z])(?=.*[A-Z]).{6,}$/
+                                        // pattern: /^(?=.*[a-z])(?=.*[A-Z]).{6,}$/
+                                        pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/
+
                                     })}
+                                    name='password'
+                                    id='password'
                                     className="input w-full"
                                     placeholder="Password"
                                 />
@@ -161,7 +206,7 @@ const Register = () => {
                                 <a className="link link-hover">Forgot password?</a>
                             </div>
 
-                            <button className="btn btn-neutral mt-4 w-full">
+                            <button type="submit" className="btn btn-neutral mt-4 w-full">
                                 Register
                             </button>
 

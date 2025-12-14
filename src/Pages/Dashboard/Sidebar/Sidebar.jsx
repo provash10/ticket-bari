@@ -5,109 +5,104 @@ import Navbar from "../../../Components/Header/Navbar";
 
 const Sidebar = () => {
     const { userDB } = useAuth();
-    //   const role = userDB?.role;
+    // const role = userDB?.role;
     // const role = userDB?.role === "admin" 
     //     ? "admin" 
     //     : userDB?.role === "vendor" 
     //         ? "vendor" 
     //         : "user";
 
-    const role = "user";
+    // const role = "user";
+    const role = "vendor";
+    // const role = "admin";
+
+
+
+
 
     return (
-           <div>
-                <aside className="w-64 bg-white shadow-lg min-h-screen p-5">
-                    <h2 className="text-xl font-bold mb-2">Dashboard</h2>
+        <div>
+            <aside className="w-64 bg-white shadow-lg min-h-screen p-5">
+                <h2 className="text-xl font-bold mb-4">Dashboard</h2>
 
-                    {/* user */}
-                    <div className="mb-3">
-                        <h2 className="btn bg-amber-500 mb-1">User Dashboard</h2>
-                        {role === "user" && (
-                            <ul className="space-y-1">
-                                <li>
-                                    <NavLink to="profile" className="sidebar-link">
-                                        User Profile
-                                    </NavLink>
-                                </li>
-                                <li>
-                                    <NavLink to="my-bookings" className="sidebar-link">
-                                        My Booked Tickets
-                                    </NavLink>
-                                </li>
-                                <li>
-                                    <NavLink to="transactions" className="sidebar-link">
-                                        Transaction History
-                                    </NavLink>
-                                </li>
-                            </ul>
-                        )}
-                    </div>
+                {/* common profile */}
+                <ul className="space-y-1">
+                    <li>
+                        <NavLink to="profile" className="sidebar-link">
+                            {role === "admin"
+                                ? "Admin Profile"
+                                : role === "vendor"
+                                    ? "Vendor Profile"
+                                    : "User Profile"}
+                        </NavLink>
+                    </li>
+                </ul>
 
-                    {/* vendor */}
-                    <div className="mb-3">
-                        <h2 className="btn bg-amber-500 mb-1">Vendor Dashboard</h2>
-                        {role === "vendor" && (
-                            <ul className="space-y-1">
-                                <li>
-                                    <NavLink to="profile" className="sidebar-link">
-                                        Vendor Profile
-                                    </NavLink>
-                                </li>
-                                <li>
-                                    <NavLink to="add-ticket" className="sidebar-link">
-                                        Add Ticket
-                                    </NavLink>
-                                </li>
-                                <li>
-                                    <NavLink to="my-tickets" className="sidebar-link">
-                                        My Added Tickets
-                                    </NavLink>
-                                </li>
-                                <li>
-                                    <NavLink to="requested-bookings" className="sidebar-link">
-                                        Requested Bookings
-                                    </NavLink>
-                                </li>
-                                <li>
-                                    <NavLink to="revenue-overview" className="sidebar-link">
-                                        Revenue Overview
-                                    </NavLink>
-                                </li>
-                            </ul>
-                        )}
-                    </div>
+                
+                {role === "user" && (
+                    <ul className="mt-4 space-y-1">
+                        <li>
+                            <NavLink to="my-bookings" className="sidebar-link">
+                                My Booked Tickets
+                            </NavLink>
+                        </li>
+                        <li>
+                            <NavLink to="transactions" className="sidebar-link">
+                                Transaction History
+                            </NavLink>
+                        </li>
+                    </ul>
+                )}
 
-                    {/* admin */}
-                    <div className="mb-3">
-                        <h2 className="btn bg-amber-500 mb-1">Admin Dashboard</h2>
-                        {role === "admin" && (
-                            <ul className="space-y-1">
-                                <li>
-                                    <NavLink to="profile" className="sidebar-link">
-                                        Admin Profile
-                                    </NavLink>
-                                </li>
-                                <li>
-                                    <NavLink to="manage-tickets" className="sidebar-link">
-                                        Manage Tickets
-                                    </NavLink>
-                                </li>
-                                <li>
-                                    <NavLink to="manage-users" className="sidebar-link">
-                                        Manage Users
-                                    </NavLink>
-                                </li>
-                                <li>
-                                    <NavLink to="advertise" className="sidebar-link">
-                                        Advertise Tickets
-                                    </NavLink>
-                                </li>
-                            </ul>
-                        )}
-                    </div>
-                </aside>
-            </div>
-        
+           
+                {role === "vendor" && (
+                    <ul className="mt-4 space-y-1">
+                        <li>
+                            <NavLink to="add-ticket" className="sidebar-link">
+                                Add Ticket
+                            </NavLink>
+                        </li>
+                        <li>
+                            <NavLink to="my-tickets" className="sidebar-link">
+                                My Added Tickets
+                            </NavLink>
+                        </li>
+                        <li>
+                            <NavLink to="requested-bookings" className="sidebar-link">
+                                Requested Bookings
+                            </NavLink>
+                        </li>
+                        <li>
+                            <NavLink to="revenue-overview" className="sidebar-link">
+                                Revenue Overview
+                            </NavLink>
+                        </li>
+                    </ul>
+                )}
+
+            
+                {role === "admin" && (
+                    <ul className="mt-4 space-y-1">
+                        <li>
+                            <NavLink to="manage-tickets" className="sidebar-link">
+                                Manage Tickets
+                            </NavLink>
+                        </li>
+                        <li>
+                            <NavLink to="manage-users" className="sidebar-link">
+                                Manage Users
+                            </NavLink>
+                        </li>
+                        <li>
+                            <NavLink to="advertise" className="sidebar-link">
+                                Advertise Tickets
+                            </NavLink>
+                        </li>
+                    </ul>
+                )}
+            </aside>
+        </div>
+
     );
 };
 

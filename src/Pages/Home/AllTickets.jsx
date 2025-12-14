@@ -1,15 +1,12 @@
 import React from 'react';
 import Tickets from '../../Components/Tickets/Tickets';
 
-
-
-
-const Home = () => {
+const AllTickets = () => {
     return (
         <div>
-            <h3>Home Page</h3>
+            <Tickets></Tickets>
         </div>
     );
 };
 
-export default Home;
+export default AllTickets;

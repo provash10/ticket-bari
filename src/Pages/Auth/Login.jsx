@@ -4,6 +4,7 @@ import useAuth from '../../Hooks/useAuth';
 import { Link, useLocation, useNavigate } from 'react-router';
 import GoogleLogin from './GoogleLogin';
 import { AiFillEye, AiFillEyeInvisible } from 'react-icons/ai';
+import toast from 'react-hot-toast';
 
 const Login = () => {
     const { register, handleSubmit, formState: { errors } } = useForm();
@@ -18,11 +19,13 @@ const Login = () => {
     const handleLogin = (data) => {
         signInUser(data.email, data.password)
             .then(result => {
+                toast.success("Login successful !!");
                 console.log(result.user);
                 navigate(location?.state || '/');
             })
             .catch(error => {
                 console.log(error);
+                 toast.error("Invalid email or password !!");
             })
     };
 
@@ -47,10 +50,12 @@ const Login = () => {
 
                             <label className="label">Email</label>
                             <input
+                                name='email'
                                 type="email"
                                 {...register("email", { required: true })}
                                 className="input w-full"
                                 placeholder="Email"
+                                id='email'
                             />
                             {errors.email?.type === "required" &&
                                 <p className="text-red-700">Email is required</p>
@@ -59,22 +64,26 @@ const Login = () => {
                             <label className="label mt-3">Password</label>
                             <div className='relative'>
                                 <input
-                                // type="password"
-                                type={showPassword ? "text" : "password"}
-                                {...register("password", {
-                                    required: true,
-                                    minLength: 8,
-                                    pattern: /^(?=.*[a-z])(?=.*[A-Z]).{6,}$/
-                                })}
-                                className="input w-full"
-                                placeholder="Password"
-                            />
-                            <span
-                                className="absolute right-2 top-2.5 cursor-pointer text-gray-600"
-                                onClick={() => setShowPassword(!showPassword)}
-                            >
-                                {showPassword ? <AiFillEyeInvisible size={20} /> : <AiFillEye size={20} />}
-                            </span>
+                                    // type="password"
+                                    type={showPassword ? "text" : "password"}
+                                    {...register("password", {
+                                        required: true,
+                                        minLength: 8,
+                                        // pattern: /^(?=.*[a-z])(?=.*[A-Z]).{6,}$/
+                                        pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/
+
+                                    })}
+                                    name='password'
+                                    className="input w-full"
+                                    placeholder="Password"
+                                    id='password'
+                                />
+                                <span
+                                    className="absolute right-2 top-2.5 cursor-pointer text-gray-600"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                >
+                                    {showPassword ? <AiFillEyeInvisible size={20} /> : <AiFillEye size={20} />}
+                                </span>
                             </div>
 
                             {errors.password?.type === "required" &&
@@ -91,7 +100,7 @@ const Login = () => {
                                 <a className="link link-hover">Forgot password?</a>
                             </div>
 
-                            <button className="btn btn-neutral mt-4 w-full">
+                            <button type="submit" className="btn btn-neutral mt-4 w-full">
                                 Login
                             </button>
 

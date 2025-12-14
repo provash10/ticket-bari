@@ -8,13 +8,13 @@ import Navbar from "../Components/Header/Navbar";
 const DashboardLayout = () => {
   const { user, loading } = useAuth();
 
-  if (loading) {
-    return (
-      <div className="w-full h-screen flex items-center justify-center">
-        <span className="loading loading-spinner loading-lg"></span>
-      </div>
-    );
-  }
+  // if (loading) {
+  //   return (
+  //     <div className="w-full h-screen flex items-center justify-center">
+  //       <span className="loading loading-spinner loading-lg"></span>
+  //     </div>
+  //   );
+  // }
 
   return (
     <div>

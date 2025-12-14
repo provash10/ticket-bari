@@ -1,15 +1,22 @@
 import React from 'react';
 import { MdEmojiTransportation } from 'react-icons/md';
-import { Link, NavLink } from 'react-router';
+import { Link, NavLink, useLocation, useNavigate } from 'react-router';
 import useAuth from '../../Hooks/useAuth';
+import toast from 'react-hot-toast';
 
 const Navbar = () => {
   const {user, logOut} = useAuth();
+   const navigate = useNavigate();
+    // const location = useLocation();
+    console.log('after logout', location);
 
   const handleLogOut=()=>{
     logOut()
     .then(result=>{
+      toast.success("LogOut successful !!");
       console.log(result.user)
+      //  navigate(location?.state || '/');
+      navigate('/');
     })
     .catch(error=>{
       console.log(error)

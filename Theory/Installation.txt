@@ -10,8 +10,12 @@ Installation
 9. npm i @tanstack/react-query
 10. react-hot-toast
 11. lottie-react *** npm i lottie-react
+12. Modal-headlessui
 
 server
 1. npm i express cors dotenv mongodb
 
 
+useAuth.jsx, useRole.jsx, private route....
+
+part-03
