@@ -1,23 +1,53 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'react-hot-toast';
 import useAuth from '../../../Hooks/useAuth';
-import { imageUpload } from '../../../Utils/index'; 
+import { imageUpload } from '../../../Utils/index';
+import axios from 'axios';
+import { useMutation } from '@tanstack/react-query';
+
 
 
 const AddTicket = () => {
     const { user } = useAuth();
     // console.log(vendor);
+
+    //useMutation hook
+    // const mutation = useMutation
+    const { mutateAsync, isPending, isError } = useMutation({
+        mutationFn: async (payload) => {
+            const res = await axios.post(
+                `${import.meta.env.VITE_API_URL}/tickets`,
+                payload
+            );
+            return res.data;
+        },
+        onSuccess: data => {
+            console.log(data)
+            toast.success("Ticket added successfully");
+        },
+        onError: error => {
+            console.log(error)
+            toast.error("Failed to add ticket");
+        },
+        onMutate: payload => {
+            console.log('I will post this data--->', payload)
+        },
+        onSettled: (data, error) => {
+            console.log('I am from onSettled--->', data)
+            if (error) console.log(error)
+        },
+        retry: 3,
+    });
+
+    //react hook form
     const { register, handleSubmit, watch, formState: { errors } } = useForm();
-    const [loading, setLoading] = useState(false);
+    // const [loading, setLoading] = useState(false);
 
     const onSubmit = async (data) => {
         try {
-            setLoading(true)
-
-            const imageFile = data.image[0]
-
-            const imageUrl = await imageUpload (imageFile)
+            const imageFile = data.image[0];
+            const imageUrl = await imageUpload(imageFile);
 
             const ticketData = {
                 title: data.title,
@@ -26,27 +56,32 @@ const AddTicket = () => {
                 transportType: data.transportType,
                 price: Number(data.price),
                 quantity: Number(data.quantity),
-                totalPrice:
-                    Number(data.price) * Number(data.quantity),
+                totalPrice: Number(data.price) * Number(data.quantity),
                 departure: data.departure,
                 perks: data.perks || [],
                 image: imageUrl,
                 vendor: {
-                    image: user?.imageUrl,
+                    image: user?.photoURL,
                     name: user?.displayName,
                     email: user?.email,
                 },
-            }
 
-            console.log(ticketData)
-            toast.success("Add Ticket Successful")
+            };
+
+
+            // const response = await axios.post(`${import.meta.env.VITE_API_URL}/tickets`, ticketData);
+            // console.log(response.data);
+
+            // toast.success("Ticket added successfully!");
+            await mutateAsync(ticketData)
         } catch (error) {
-            console.log(error)
-            toast.error("Image upload failed")
-        } finally {
-            setLoading(false)
+            console.error(error);
+            toast.error("Failed to add ticket. Please try again.");
         }
-    }
+    };
+
+    // if (isPending) return <LoadingSpinner />
+    if (isError) return <ErrorPages></ErrorPages>
 
 
     return (
@@ -228,19 +263,27 @@ const AddTicket = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label className="block font-semibold mb-1">Vendor Name</label>
-                        <input value={user?.displayName} disabled type="text" className="input w-full border border-gray-300 rounded p-2 bg-gray-100" disabled value="Vendor Name" />
+                        <input value={user?.displayName} type="text" className="input w-full border border-gray-300 rounded p-2 bg-gray-100" disabled />
                     </div>
                     <div>
                         <label className="block font-semibold mb-1">Vendor Email</label>
-                        <input value={user?.email} disabled type="text" className="input w-full border border-gray-300 rounded p-2 bg-gray-100" disabled value="vendor@example.com" />
+                        <input value={user?.email} type="text" className="input w-full border border-gray-300 rounded p-2 bg-gray-100" disabled />
                     </div>
                 </div>
 
 
                 <div className="text-center mt-4">
-                    <button type="submit" className="btn btn-primary w-full">
-                        {loading ? "Adding..." : "Add Ticket"}
+                    {/* <button type="submit" className="btn btn-primary w-full">
+                    {loading ? "Adding..." : "Add Ticket"}
+                </button> */}
+                    <button
+                        type="submit"
+                        className="btn btn-primary w-full"
+                        disabled={isPending}
+                    >
+                        {isPending ? "Adding..." : "Add Ticket"}
                     </button>
+
                 </div>
             </form>
         </div>

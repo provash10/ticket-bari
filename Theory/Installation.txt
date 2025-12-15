@@ -14,8 +14,12 @@ Installation
 
 server
 1. npm i express cors dotenv mongodb
-
+2. npm i firebase-admin
 
 useAuth.jsx, useRole.jsx, private route....
 
-part-03
+64-3 (Recap) JWT token & axios interceptor to send Token to backend
+part -1 -6  22 Min
+
+https://tanstack.com/query/latest/docs/framework/react/reference/useMutation
+https://tanstack.com/query/latest/docs/framework/react/quick-start
