@@ -14,7 +14,7 @@ const AddTicket = () => {
 
     //useMutation hook
     // const mutation = useMutation
-    const { mutateAsync, isPending, isError } = useMutation({
+    const { mutateAsync, isPending, isError,reset: mutationReset } = useMutation({
         mutationFn: async (payload) => {
             const res = await axios.post(
                 `${import.meta.env.VITE_API_URL}/tickets`,
@@ -25,10 +25,12 @@ const AddTicket = () => {
         onSuccess: data => {
             console.log(data)
             toast.success("Ticket added successfully");
+            //navigate to my inventory page/ 
+            mutationReset()
         },
         onError: error => {
             console.log(error)
-            toast.error("Failed to add ticket");
+            // toast.error("Failed to add ticket");
         },
         onMutate: payload => {
             console.log('I will post this data--->', payload)
@@ -41,14 +43,14 @@ const AddTicket = () => {
     });
 
     //react hook form
-    const { register, handleSubmit, watch, formState: { errors } } = useForm();
+    const { register, handleSubmit, watch, formState: { errors }, reset }= useForm();
     // const [loading, setLoading] = useState(false);
 
     const onSubmit = async (data) => {
         try {
             const imageFile = data.image[0];
             const imageUrl = await imageUpload(imageFile);
-
+            reset();
             const ticketData = {
                 title: data.title,
                 from: data.from,
@@ -80,7 +82,7 @@ const AddTicket = () => {
         }
     };
 
-    // if (isPending) return <LoadingSpinner />
+    if (isPending) return <LoadingSpinner />
     if (isError) return <ErrorPages></ErrorPages>
 
 
@@ -281,7 +283,7 @@ const AddTicket = () => {
                         className="btn btn-primary w-full"
                         disabled={isPending}
                     >
-                        {isPending ? "Adding..." : "Add Ticket"}
+                        {isPending ? "Adding..." : "Save & Continue"}
                     </button>
 
                 </div>
