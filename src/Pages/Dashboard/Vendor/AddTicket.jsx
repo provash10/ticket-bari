@@ -5,6 +5,7 @@ import useAuth from '../../../Hooks/useAuth';
 import { imageUpload } from '../../../Utils/index';
 import axios from 'axios';
 import { useMutation } from '@tanstack/react-query';
+import LoadingSpinner from '../../../LoaderPage/LoadingSpinner';
 
 
 
@@ -82,7 +83,7 @@ const AddTicket = () => {
         }
     };
 
-    if (isPending) return <LoadingSpinner />
+    if (isPending) return <LoadingSpinner></LoadingSpinner>
     if (isError) return <ErrorPages></ErrorPages>
 
 

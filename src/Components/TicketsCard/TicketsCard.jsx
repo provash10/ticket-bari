@@ -14,7 +14,8 @@ const TicketsCard = ({ ticket }) => {
     availableTickets,
     bookingQuantity,
     departure,
-    totalPrice
+    totalPrice,
+    vendor= {},
   } = ticket || {};
 
   return (
@@ -85,6 +86,29 @@ const TicketsCard = ({ ticket }) => {
           See Details
         </Link>
       </div>
+
+      {/* <div className="flex justify-between items-center">
+        <h3 className="text-xs">Vendor: {vendor.name}</h3>
+        <h3 className="text-xs">Email: {vendor.email}</h3>
+      </div> */}
+      
+      {/* vendor info */}
+      {vendor.name && (
+        <div className="flex justify-between items-center gap-2 mt-2 p-2 border-t border-gray-200">
+          {vendor.image && (
+            <img
+              src={vendor.image}
+              alt={vendor.name}
+              className="w-6 h-6 rounded-full"
+              referrerPolicy="no-referrer"
+            />
+          )}
+          <div className="text-xs">
+            <div>Vendor: {vendor.name}</div>
+            <div>Email: {vendor.email}</div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

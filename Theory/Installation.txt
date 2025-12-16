@@ -28,3 +28,401 @@ https://tanstack.com/query/latest/docs/framework/react/quick-start
 
 ***** Milstone-10 Conceptual...
 Important Links: Special Session-CRUD, Auth, Queries & Middleware
+
+
+===========
+import { StrictMode } from 'react'
+import { createRoot } from 'react-dom/client'
+import './index.css'
+import App from './App.jsx'
+import { RouterProvider } from 'react-router'
+import { router } from './Routes/Router.jsx'
+import AuthProvider from './Contexts/AuthProvider.jsx'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { Toaster } from 'react-hot-toast'
+
+// Create a client
+const queryClient = new QueryClient()
+
+createRoot(document.getElementById('root')).render(
+  <StrictMode>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+      <RouterProvider router={router}>
+
+    </RouterProvider>
+    </AuthProvider>
+    <Toaster position="top-right" reverseOrder={false}></Toaster>
+    </QueryClientProvider>
+  </StrictMode>,
+)   import { createBrowserRouter } from "react-router";
+import MainLayout from "../Layouts/MainLayout";
+import Home from "../Pages/Home/Home";
+import AuthLayout from "../Layouts/AuthLayout";
+import Login from "../Pages/Auth/Login";
+import Register from "../Pages/Auth/Register";
+import ErrorPages from "../LoaderPage/ErrorPages";
+import PrivateRoute from "./PrivateRoute";
+
+import DashboardLayout from "../Layouts/DashboardLayout";
+import UserProfile from "../Pages/Dashboard/User/UserProfile";
+import MyBookedTickets from "../Pages/Dashboard/User/MyBookedTickets";
+import TransactionHistory from "../Pages/Dashboard/User/TransactionHistory";
+import AddTicket from "../Pages/Dashboard/Vendor/AddTicket";
+import Profile from "../Pages/Dashboard/Profile/Profile";
+import TicketDetails from "../Components/Tickets/TicketDetails";
+import AllTickets from "../Pages/Home/AllTickets";
+
+
+
+export const router = createBrowserRouter([
+    //MainLayout
+    {
+        path: ("/"),
+        element: <MainLayout></MainLayout>,
+        errorElement: <ErrorPages></ErrorPages>,
+        children: [
+            {
+                index: true,
+                element: <Home></Home>,
+            },
+            {
+                path: 'all-tickets',
+                element: <AllTickets></AllTickets>,
+            },
+            {
+                path: '/ticket/:id',
+                element: <TicketDetails></TicketDetails>,
+            },
+        ]
+    },
+
+    // AuthLayout
+    {
+        path: '/auth',
+        element: <AuthLayout></AuthLayout>,
+        children: [
+            {
+                path: 'login',
+                element: <Login></Login>
+            },
+            {
+                path: 'register',
+                element: <Register></Register>
+            },
+        ]
+    },
+
+    //DashboardLayout
+    {
+        path: '/dashboard',
+        element:
+           ( <PrivateRoute>
+                <DashboardLayout></DashboardLayout>
+            </PrivateRoute>),
+
+        children: [
+            {
+                index: true,
+                element: <Profile />
+            },
+
+            // User pages
+            { path: "my-bookings", element: <MyBookedTickets /> },
+            { path: "transactions", element: <TransactionHistory /> },
+
+            // Vendor pages
+            { path: "add-ticket", element: <AddTicket /> },
+            // { path: "my-tickets", element: <MyAddedTickets /> },
+            // { path: "requested-bookings", element: <RequestedBookings /> },
+            // { path: "revenue-overview", element: <RevenueOverview /> },
+
+            // Admin pages
+            // { path: "manage-tickets", element: <ManageTickets /> },
+            // { path: "manage-users", element: <ManageUsers /> },
+            // { path: "advertise", element: <AdvertiseTickets /> },
+        ]
+    }
+]) import React from 'react';
+import Tickets from '../../Components/Tickets/Tickets';
+
+const AllTickets = () => {
+    return (
+        <div>
+            <Tickets></Tickets>
+        </div>
+    );
+};
+
+export default AllTickets; import React from 'react';
+import { useQuery } from '@tanstack/react-query';
+import axios from 'axios';
+import LoadingSpinner from '../../LoaderPage/LoadingSpinner';
+import Container from '../../Pages/Container/Container';
+import TicketsCard from '../TicketsCard/TicketsCard';
+
+const Tickets = () => {
+    // const query = useQuery
+    const { data: tickets = [], isLoading, isError } = useQuery({
+        queryKey: ['tickets'],
+        queryFn: async () => {
+            const result = await axios(`${import.meta.env.VITE_API_URL}/tickets`)
+            return result.data
+        },
+
+    })
+    console.log(tickets)
+    if (isLoading) return <LoadingSpinner></LoadingSpinner>
+    return (
+        <div>
+            <h3>All Tickets</h3>
+
+             {tickets && tickets.length > 0 ? (
+                <div className='p-2 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2'>
+                    {tickets.map(ticket => (
+                        <TicketsCard key={ticket._id} ticket={ticket} ></TicketsCard>
+                    ))}
+                </div>
+            ) : null}
+            
+        </div>
+        // <Container>
+        //     {tickets && tickets.length > 0 ? (
+        //         <div className='pt-12 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8'>
+        //             {tickets.map(ticket => (
+        //                 <TicketsCard key={ticket._id} ticket={ticket} ></TicketsCard>
+        //             ))}
+        //         </div>
+        //     ) : null}
+        // </Container>
+    );
+};
+
+export default Tickets; import { Link } from "react-router";
+
+const TicketsCard = ({ ticket }) => {
+  console.log(ticket)
+  const {
+    _id,
+    title,
+    image,
+    from,
+    to,
+    transportType,
+    perks = [],
+    price,
+    availableTickets,
+    bookingQuantity,
+    departure,
+    totalPrice
+  } = ticket || {};
+
+  return (
+    <div className="card bg-white border border-gray-200 rounded-xl shadow hover:shadow-xl transition h-full">
+
+      {/* image */}
+      <figure className="h-48 w-full overflow-hidden rounded-t-xl">
+        <img
+          src={image}
+          alt={title}
+          className="w-full h-full object-cover"
+        />
+      </figure>
+
+      <div className="card-body space-y-2">
+
+        {/* title */}
+        <h3 className="text-lg font-semibold">{title}</h3>
+
+        {/* transport type */}
+        <p className="text-sm text-gray-600">
+          <strong>Transport:</strong> {transportType}
+        </p>
+
+        {/* route */}
+        <p className="text-sm text-gray-700">
+          <strong>Route:</strong> {from} → {to}
+        </p>
+
+        {/* perks */}
+        <div className="space-x-1">
+          {perks.map((perk, index) => (
+            <span
+              key={index}
+              className="badge badge-outline badge-sm"
+            >
+              {perk}
+            </span>
+          ))}
+        </div>
+
+        {/* departure */}
+        <p className="text-sm text-gray-600">
+          <strong>Departure:</strong>{" "}
+          {new Date(departure).toLocaleString()}
+        </p>
+
+        <div className="flex justify-between items-center">
+          {/* available tickets */}
+          <p className="text-lg font-normal">
+            <strong>Available:</strong> {availableTickets}
+          </p>
+
+          {/* price */}
+          <p className="text-lg font-bold text-primary">
+            ৳ {price}
+            <span className="text-sm font-normal text-gray-500">
+              {" "} / ticket
+            </span>
+          </p>
+        </div>
+
+        {/* see deatails btn*/}
+        <Link
+          to={`/ticket/${_id}`}
+          className="btn btn-primary btn-sm w-full mt-2"
+        >
+          See Details
+        </Link>
+      </div>
+    </div>
+  );
+};
+
+export default TicketsCard; const Button = ({ label, onClick, disabled, outline, small, icon: Icon }) => {
+  return (
+    <button
+      disabled={disabled}
+      onClick={onClick}
+      className={`
+          relative
+          disabled:opacity-70
+          disabled:cursor-not-allowed
+          rounded-lg
+          hover:opacity-80
+          transition
+          cursor-pointer
+          px-4
+          w-full
+          ${outline ? 'bg-white' : 'bg-lime-500'}
+          ${outline ? 'border-black' : 'border-lime-500'}
+          ${outline ? 'text-black' : 'text-white'}
+          ${small ? 'text-sm' : 'text-md'}
+          ${small ? 'py-1' : 'py-3'}
+          ${small ? 'font-light' : 'font-semibold'}
+          ${small ? 'border' : 'border-2'}
+        `}
+    >
+      {Icon && (
+        <Icon
+          size={24}
+          className='
+              absolute
+              left-4
+              top-3
+            '
+        />
+      )}
+      {label}
+    </button>
+  )
+}
+
+export default Button
+const Heading = ({ title, subtitle, center }) => {
+  return (
+    <div className={center ? 'text-center' : 'text-start'}>
+      <div className='text-2xl font-bold'>{title}</div>
+      <div className='font-light text-neutral-500 mt-2'>{subtitle}</div>
+    </div>
+  )
+}
+
+export default Heading; import { Dialog, DialogPanel, DialogTitle } from '@headlessui/react'
+
+const BookModal = ({ isOpen, closeModal, ticket }) => {
+  const {
+    title,
+    transportType,
+    from,
+    to,
+    price,
+    availableTickets,
+  } = ticket || {}
+
+  return (
+    <Dialog
+      open={isOpen}
+      as="div"
+      className="relative z-10"
+      onClose={closeModal}
+    >
+      <div className="fixed inset-0 z-10 w-screen overflow-y-auto">
+        <div className="flex min-h-full items-center justify-center p-4">
+          <DialogPanel className="w-full max-w-md bg-white p-6 shadow-xl rounded-2xl">
+            <DialogTitle className="text-lg font-medium text-center text-gray-900">
+              Book Your Ticket
+            </DialogTitle>
+
+            <div className="mt-4 space-y-2">
+              <p><strong>Title:</strong> {title || "Ticket Title"}</p>
+              <p><strong>Transport:</strong> {transportType || "Type"}</p>
+              <p><strong>Route:</strong> {from || "From"} → {to || "To"}</p>
+              <p><strong>Price per Ticket:</strong> ৳ {price || 0}</p>
+              <p><strong>Available Tickets:</strong> {availableTickets || 0}</p>
+            </div>
+
+            <div className="mt-4 flex flex-col gap-3">
+              <label className="font-semibold">Booking Quantity</label>
+              <input
+                type="number"
+                min={1}
+                max={availableTickets || 1}
+                defaultValue={1}
+                className="input w-full border border-gray-300 rounded p-2"
+              />
+            </div>
+
+            <div className="mt-6 flex justify-around">
+              <button
+                className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+              >
+                Confirm Booking
+              </button>
+              <button
+                className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+                onClick={closeModal}
+              >
+                Cancel
+              </button>
+            </div>
+          </DialogPanel>
+        </div>
+      </div>
+    </Dialog>
+  )
+}
+
+export default BookModal
+Installation
+1. react-router
+2. tailwindcss
+3. daisyui
+4. Google Font -Inter
+5. npm i react-icons
+6. npm install react-hook-form 
+7. npm install firebase
+8. axios - npm i axios  // for imagebb
+9. npm i @tanstack/react-query
+10. react-hot-toast
+11. lottie-react *** npm i lottie-react
+12. Modal-headlessui
+13. npm install react-spinners
+
+
+server
+1. npm i express cors dotenv mongodb
+2. npm i firebase-admin
+
+useAuth.jsx, useRole.jsx, private route....
+ 
