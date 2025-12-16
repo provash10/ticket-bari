@@ -8,7 +8,7 @@ const Navbar = () => {
   const {user, logOut} = useAuth();
    const navigate = useNavigate();
     // const location = useLocation();
-    console.log('after logout', location);
+    // console.log('after logout', location);
 
   const handleLogOut=()=>{
     logOut()

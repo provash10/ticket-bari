@@ -1,7 +1,7 @@
 import { Link } from "react-router";
 
 const TicketsCard = ({ ticket }) => {
-  console.log(ticket)
+  // console.log(ticket)
   const {
     _id,
     title,

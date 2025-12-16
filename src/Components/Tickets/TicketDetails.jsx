@@ -3,16 +3,17 @@ import axios from "axios";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router";
 import LoadingSpinner from "../../LoaderPage/LoadingSpinner";
-
-import Container from "../../Pages/Container/Container";
 import { Button } from "@headlessui/react";
 import BookModal from "../Modal/BookModal";
 import Heading from "../Shared/Heading";
+import toast from "react-hot-toast";
+import useAuth from "../../Hooks/useAuth";
 
 
 const TicketDetails = () => {
+  const {user} = useAuth();
   const { id } = useParams();
-  console.log(id) //checked
+  // console.log(id) //checked
   const [isOpen, setIsOpen] = useState(false);
   const [countdown, setCountdown] = useState("");
   const [selectedPerks, setSelectedPerks] = useState([]);
@@ -25,10 +26,13 @@ const TicketDetails = () => {
     queryKey: ["ticket", id],
     queryFn: async () => {
       const res = await axios(`${import.meta.env.VITE_API_URL}/tickets/${id}`);
+      toast.success("Booking successful!");
       return res.data;
+       
     },
+
   });
-  console.log(ticket)
+  // console.log(ticket)
 
   const {
     _id, title, image, from, to, transportType,
@@ -71,8 +75,8 @@ const TicketDetails = () => {
 
 
   return (
-    <Container>
-      <div className="flex flex-col lg:flex-row gap-12">
+    <div>
+      <div className="flex flex-col lg:flex-row gap-6">
 
         <div className="flex-1 overflow-hidden rounded-xl">
           <img
@@ -83,13 +87,14 @@ const TicketDetails = () => {
         </div>
 
         {/* info */}
-        <div className="flex-1 flex flex-col gap-6">
+        <div className="flex-1 flex  items-center flex-col gap-6">
           <Heading> title={title} subtitle={`Route: ${from} → ${to}`}</Heading>
+          <Heading title={title} subtitle={`Route: ${from} - ${to}`} />
+
 
           <p><strong>Transport:</strong> {transportType}</p>
-          <p><strong>Departure:</strong> {departureDate.toLocaleString()} ({countdown})</p>
 
-          {/* vendor info */}
+           {/* vendor */}
           {vendor.name && (
             <div className="flex justify-between items-center gap-2 mt-2 p-2 border-t border-gray-200">
               {vendor.image && (
@@ -106,6 +111,8 @@ const TicketDetails = () => {
               </div>
             </div>
           )}
+
+          <p><strong>Departure:</strong> {departureDate.toLocaleString()} ({countdown})</p>
 
           <p><strong>Available Tickets:</strong> {availableTickets}</p>
 
@@ -130,12 +137,12 @@ const TicketDetails = () => {
             ))}
           </div>
 
-          <div className="flex justify-between items-center">
-            <p className="text-2xl font-bold">Price: ৳ {price}</p>
+          <div className="flex justify-between items-center gap-4">
+            <p className="text-2xl font-bold bg-amber-400 px-3 py-2 rounded-full">Price: ৳ {price}</p>
 
-            {/* booking quantity control */}
-            <div className="flex items-center gap-3">
-              <span className="font-semibold">Quantity:</span>
+            {/* booking quantity  */}
+            <div className="flex items-center gap-2">
+              <span className="text-2xl font-semibold">Quantity:</span>
               <input
                 type="number"
                 min={1}
@@ -147,7 +154,7 @@ const TicketDetails = () => {
             </div>
           </div>
 
-          {/* total price display */}
+          {/* total price */}
           <p className="text-xl font-bold text-green-600">
             Total Price: ৳ {calculatedTotalPrice}
           </p>
@@ -171,8 +178,10 @@ const TicketDetails = () => {
         selectedPerks={selectedPerks}
         quantity={quantity}
         totalPrice={calculatedTotalPrice}
+        refetch={refetch}
+        user={user}
       />
-    </Container>
+    </div>
   );
 };
 

@@ -17,7 +17,7 @@ const DashboardLayout = () => {
   // }
 
   return (
-    <div>
+    <div className="max-w-7xl mx-auto">
       <Navbar></Navbar>
       <div className="flex min-h-screen">
       {/* sidebar */}

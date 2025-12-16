@@ -423,6 +423,6 @@ Installation
 server
 1. npm i express cors dotenv mongodb
 2. npm i firebase-admin
-
+3. npm install --save stripe
 useAuth.jsx, useRole.jsx, private route....
  
