@@ -1,129 +1,131 @@
-
 import React from "react";
 
 const MyBookedTickets = () => {
   return (
-    // <div className="container mx-auto px-4 sm:px-8 py-8">
-    //   <h2 className="text-2xl font-bold mb-6">My Booked Tickets</h2>
-    //   <div className="overflow-x-auto">
-    //     <div className="inline-block min-w-full shadow-md rounded-lg overflow-hidden">
-    //       <table className="min-w-full divide-y divide-gray-200 bg-white">
-    //         <thead className="bg-gray-50">
-    //           <tr>
-    //             {["Image", "Title", "Route", "Departure", "Quantity", "Total Price", "Status"].map((title) => (
-    //               <th
-    //                 key={title}
-    //                 scope="col"
-    //                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-    //               >
-    //                 {title}
-    //               </th>
-    //             ))}
-    //           </tr>
-    //         </thead>
-    //         <tbody className="divide-y divide-gray-200">
-    //           {[1, 2, 3].map((_, idx) => (
-    //             <tr key={idx} className="hover:bg-gray-100 transition">
-    //               <td className="px-6 py-4 whitespace-nowrap">
-    //                 <div className="w-12 h-12 bg-gray-200 rounded-md flex items-center justify-center text-gray-400">Img</div>
-    //               </td>
-    //               <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Sample Ticket</td>
-    //               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">City A → City B</td>
-    //               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">2025-12-31 10:00 AM</td>
-    //               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">2</td>
-    //               <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">৳2000</td>
-    //               <td className="px-6 py-4 whitespace-nowrap">
-    //                 <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
-    //                   Pending
-    //                 </span>
-    //               </td>
-    //             </tr>
-    //           ))}
-    //         </tbody>
-    //       </table>
-    //     </div>
-    //   </div>
-    // </div>
     <div className="p-6">
       <h2 className="text-2xl font-bold mb-6">My Booked Tickets</h2>
-      <div className="overflow-x-auto">
-        <table className="min-w-full bg-white shadow rounded-lg">
-          <thead>
-            <tr className="bg-gray-100">
-              <th className="py-2 px-4 text-left">Ticket</th>
-              <th className="py-2 px-4 text-left">From → To</th>
-              <th className="py-2 px-4 text-left">Departure</th>
-              <th className="py-2 px-4 text-left">Quantity</th>
-              <th className="py-2 px-4 text-left">Total Price</th>
-              <th className="py-2 px-4 text-left">Status</th>
-              <th className="py-2 px-4 text-left">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr className="border-b">
-              <td className="py-2 px-4 flex items-center">
-                <img
-                  src="https://via.placeholder.com/80x50"
-                  className="h-12 w-20 object-cover rounded mr-2"
-                  alt="Ticket"
-                />
-                Dhaka → Chittagong
-              </td>
-              <td className="py-2 px-4">Dhaka → Chittagong</td>
-              <td className="py-2 px-4">2025-12-20, 10:00 AM</td>
-              <td className="py-2 px-4">2</td>
-              <td className="py-2 px-4">$40</td>
-              <td className="py-2 px-4 text-blue-600 font-semibold">Pending</td>
-              <td className="py-2 px-4">
-                <button className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600">
-                  Pay Now
-                </button>
-              </td>
-            </tr>
 
-            <tr className="border-b">
-              <td className="py-2 px-4 flex items-center">
-                <img
-                  src="https://via.placeholder.com/80x50"
-                  className="h-12 w-20 object-cover rounded mr-2"
-                  alt="Ticket"
-                />
-                Sylhet → Dhaka
-              </td>
-              <td className="py-2 px-4">Sylhet → Dhaka</td>
-              <td className="py-2 px-4">2025-12-22, 03:00 PM</td>
-              <td className="py-2 px-4">1</td>
-              <td className="py-2 px-4">$20</td>
-              <td className="py-2 px-4 text-green-600 font-semibold">Paid</td>
-              <td className="py-2 px-4">
-                <button className="bg-gray-300 text-white px-3 py-1 rounded cursor-not-allowed" disabled>
-                  Pay Now
-                </button>
-              </td>
-            </tr>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        
+        <div className="bg-white rounded-xl shadow border overflow-hidden">
+          <img
+            src="https://via.placeholder.com/400x200"
+            alt="Ticket"
+            className="w-full h-40 object-cover border"
+          />
 
-            <tr className="border-b">
-              <td className="py-2 px-4 flex items-center">
-                <img
-                  src="https://via.placeholder.com/80x50"
-                  className="h-12 w-20 object-cover rounded mr-2"
-                  alt="Ticket"
-                />
-                Chittagong → Cox's Bazar
-              </td>
-              <td className="py-2 px-4">Chittagong → Cox's Bazar</td>
-              <td className="py-2 px-4">2025-12-25, 09:00 AM</td>
-              <td className="py-2 px-4">3</td>
-              <td className="py-2 px-4">$60</td>
-              <td className="py-2 px-4 text-red-600 font-semibold">Rejected</td>
-              <td className="py-2 px-4">
-                <button className="bg-gray-300 text-white px-3 py-1 rounded cursor-not-allowed" disabled>
-                  Pay Now
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+          <div className="p-4 space-y-2">
+            <h3 className="text-lg font-semibold">Dhaka → Cox’s Bazar</h3>
+
+            <p className="text-sm text-gray-600">
+              From <span className="font-medium">Dhaka</span> →{" "}
+              <span className="font-medium">Cox’s Bazar</span>
+            </p>
+
+            <p className="text-sm">
+              Departure: <span className="font-medium">25 Dec 2025, 10:00 AM</span>
+            </p>
+
+            <p className="text-sm">
+              Booking Quantity: <span className="font-medium">2</span>
+            </p>
+
+            <p className="text-sm">
+              Total Price: <span className="font-semibold">৳ 6,000</span>
+            </p>
+
+            <div className="flex items-center justify-between mt-3">
+              <span className="px-3 py-1 text-sm rounded-full bg-yellow-100 text-yellow-700">
+                Pending
+              </span>
+
+              <span className="text-sm text-gray-500">
+                 3d 5h 20m left
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* accepted */}
+        <div className="bg-white rounded-xl shadow border overflow-hidden">
+          <img
+            src="https://via.placeholder.com/400x200"
+            alt="Ticket"
+            className="w-full h-40 object-cover"
+          />
+
+          <div className="p-4 space-y-2">
+            <h3 className="text-lg font-semibold">Dhaka → Sylhet</h3>
+
+            <p className="text-sm text-gray-600">
+              From <span className="font-medium">Dhaka</span> →{" "}
+              <span className="font-medium">Sylhet</span>
+            </p>
+
+            <p className="text-sm">
+              Departure: <span className="font-medium">30 Dec 2025, 8:30 AM</span>
+            </p>
+
+            <p className="text-sm">
+              Booking Quantity: <span className="font-medium">1</span>
+            </p>
+
+            <p className="text-sm">
+              Total Price: <span className="font-semibold">৳ 2,500</span>
+            </p>
+
+            <div className="flex items-center justify-between mt-3">
+              <span className="px-3 py-1 text-sm rounded-full bg-green-100 text-green-700">
+                Accepted
+              </span>
+
+              <span className="text-sm text-gray-500">
+                 5d 2h left
+              </span>
+            </div>
+
+            <button className="w-full mt-4 bg-green-600 text-white py-2 rounded-lg hover:bg-green-700">
+              Pay Now
+            </button>
+          </div>
+        </div>
+
+        {/* rejected */}
+        <div className="bg-white rounded-xl shadow border overflow-hidden">
+          <img
+            src="https://via.placeholder.com/400x200"
+            alt="Ticket"
+            className="w-full h-40 object-cover"
+          />
+
+          <div className="p-4 space-y-2">
+            <h3 className="text-lg font-semibold">Chattogram → Dhaka</h3>
+
+            <p className="text-sm text-gray-600">
+              From <span className="font-medium">Chattogram</span> →{" "}
+              <span className="font-medium">Dhaka</span>
+            </p>
+
+            <p className="text-sm">
+              Departure: <span className="font-medium">20 Dec 2025, 6:00 PM</span>
+            </p>
+
+            <p className="text-sm">
+              Booking Quantity: <span className="font-medium">3</span>
+            </p>
+
+            <p className="text-sm">
+              Total Price: <span className="font-semibold">৳ 7,500</span>
+            </p>
+
+            <div className="mt-3">
+              <span className="px-3 py-1 text-sm rounded-full bg-red-100 text-red-700">
+                Rejected
+              </span>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
   );
