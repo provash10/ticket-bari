@@ -12,8 +12,8 @@ const Sidebar = () => {
     //         ? "vendor" 
     //         : "user";
 
-    const role = "user";
-    // const role = "vendor";
+    // const role = "user";
+    const role = "vendor";
     // const role = "admin";
 
 

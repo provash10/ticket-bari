@@ -3,7 +3,7 @@ import React from 'react';
 const ManageTickets = () => {
     return (
         <div>
-            <h3>Manage Tickets Table</h3>
+            <h3>Manage Tickets</h3>
         </div>
     );
 };

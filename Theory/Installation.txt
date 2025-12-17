@@ -428,3 +428,9 @@ useAuth.jsx, useRole.jsx, private route....
  
 
  part-2 part -07 8.00 min
+
+user/customer
+ my orders --->>> my-bookings MyBookedTickets
+
+Vendor/seller
+ my inventory --->>>requested-bookings Requested Bookings
