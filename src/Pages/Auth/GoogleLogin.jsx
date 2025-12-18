@@ -2,25 +2,34 @@ import React from 'react';
 import useAuth from '../../Hooks/useAuth';
 import { useLocation, useNavigate } from 'react-router';
 import toast from 'react-hot-toast';
+import { saveOrUpdateUser } from '../../Utils';
 
 const GoogleLogin = () => {
     const {signInGoogle} = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
-     console.log('in the Google login page', location);
+    //  console.log('in the Google login page', location);
 
-    const handleGoogleSignIn=()=>{
-        signInGoogle()
-        .then(result=>{
-              toast.success("Logged in with Google Successful !!!");
-            console.log(result.user)
-            navigate(location?.state || '/');
-        })
-        .catch(error=>{
-            console.log(error);
-            toast.error("Google login failed");
-        })
+ const handleGoogleSignIn = async () => {
+    try {
+      const result = await signInGoogle();
+      const user = result.user;
+
+      // save user to DB
+      await saveOrUpdateUser({
+        name: user.displayName,
+        email: user.email,
+        image: user.photoURL,
+        role: "user",
+      });
+
+      toast.success("Logged in with Google Successfully!");
+      navigate(location?.state || "/");
+    } catch (error) {
+      console.log(error);
+      toast.error("Google login failed");
     }
+  };
     return (
         <div>
             <p className='text-3xl font-bold underline m-2'>OR</p>

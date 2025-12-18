@@ -17,6 +17,7 @@ import TicketDetails from "../Components/Tickets/TicketDetails";
 import AllTickets from "../Pages/Home/AllTickets";
 import PaymentSuccess from "../Components/Payment/PaymentSuccess";
 import RequestedBookings from "../Pages/Dashboard/Vendor/RequestedBookings";
+import ManageTickets from "../Pages/Dashboard/Admin/ManageTickets";
 
 export const router = createBrowserRouter([
     //MainLayout
@@ -87,9 +88,9 @@ export const router = createBrowserRouter([
             // { path: "revenue-overview", element: <RevenueOverview /> },
 
             // Admin pages
-            // { path: "manage-tickets",
-            //      element: <ManageTickets></ManageTickets>,
-            // },
+            { path: "manage-tickets",
+                 element: <ManageTickets></ManageTickets>,
+            },
             // { path: "manage-users", element: <ManageUsers /> },
             // { path: "advertise", element: <AdvertiseTickets /> },
         ]

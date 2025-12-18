@@ -13,8 +13,8 @@ const Sidebar = () => {
     //         : "user";
 
     // const role = "user";
-    const role = "vendor";
-    // const role = "admin";
+    // const role = "vendor";
+    const role = "admin";
 
 
 

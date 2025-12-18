@@ -5,6 +5,7 @@ import { Link, useLocation, useNavigate } from 'react-router';
 import GoogleLogin from './GoogleLogin';
 import { AiFillEye, AiFillEyeInvisible } from 'react-icons/ai';
 import toast from 'react-hot-toast';
+import { saveOrUpdateUser } from '../../Utils';
 
 const Login = () => {
     const { register, handleSubmit, formState: { errors } } = useForm();
@@ -16,18 +17,27 @@ const Login = () => {
     const [showPassword, setShowPassword] = useState(false);
 
 
-    const handleLogin = (data) => {
-        signInUser(data.email, data.password)
-            .then(result => {
-                toast.success("Login successful !!");
-                console.log(result.user);
-                navigate(location?.state || '/');
-            })
-            .catch(error => {
-                console.log(error);
-                 toast.error("Invalid email or password !!");
-            })
-    };
+ const handleLogin = async (data) => {
+  try {
+    const result = await signInUser(data.email, data.password);
+    const user = result.user;
+
+    // save user to DB
+    await saveOrUpdateUser({
+      name: user.displayName || "N/A",
+      email: user.email,
+      image: user.photoURL || "",
+      role: "user",
+    });
+
+    toast.success("Login successful !!");
+    navigate(location?.state || "/");
+  } catch (error) {
+    console.log(error);
+    toast.error("Invalid email or password !!");
+  }
+};
+
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-gray-100">

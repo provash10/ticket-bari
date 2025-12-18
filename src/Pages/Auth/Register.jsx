@@ -6,90 +6,57 @@ import GoogleLogin from './GoogleLogin';
 import axios from 'axios';
 import { AiFillEye, AiFillEyeInvisible } from 'react-icons/ai';
 import toast from 'react-hot-toast';
+import { saveOrUpdateUser } from '../../Utils';
 
 const Register = () => {
     const { register, handleSubmit, formState: { errors } } = useForm();
-    console.log(errors);
+    // console.log(errors);
     const { registerUser, updateUserProfile } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
-    console.log('in the register page', location);
+    // console.log('in the register page', location);
 
     const [showPassword, setShowPassword] = useState(false);
 
 
+        const handleRegistration = async (data) => {
+      try {
+        const result = await registerUser(data.email, data.password);
+        console.log(result.user);
 
-    // const handleRegistration = (data) => {
-    //     console.log('after register', data);
-    //     // console.log('after register', data.photo[0]);
+        const profileImg = data.photo[0];
 
-    //     const profileImg = data.photo[0];
-    //     registerUser(data.email, data.password)
-    //         .then(result => {
-    //             console.log(result.user);
-    //             //store data image in form data
-    //             const formData = new FormData();
-    //             formData.append('image', profileImg);
+        const formData = new FormData();
+        formData.append('image', profileImg);
 
-    //             //send the photo to store and get the url
-    //             const image_API_URL = `https://api.imgbb.com/1/upload?key=${import.meta.env.VITE_image_host_key}`
-    //             axios.post(image_API_URL, formData)
-    //                 .then(res => {
-    //                     console.log('after imageupload', res.data.data.url);
+        const image_API_URL = `https://api.imgbb.com/1/upload?key=${import.meta.env.VITE_IMGBB_API_KEY}`;
+        const res = await axios.post(image_API_URL, formData);
 
-    //                     //update user profile to firebase
-    //                     const userProfile = {
-    //                         displayName: data.name,
-    //                         // email: data.email,
-    //                         photoURL: res.data.data.url
-    //                     }
-    //                     updateUserProfile(userProfile)
-    //                         .then(() => {
-    //                             console.log('User Profile Updated')
-    //                             navigate(location?.state || '/');
-    //                             toast.success('Signup Successful')
+        const imageURL = res.data.data.url;
 
-    //                         })
-    //                         .catch(error => {
-    //                             console.log(error);
-    //                         });
-    //                 })
-
-    //         })
-    //         .catch(error => {
-    //             console.log(error);
-    //         });
-    // };
-
-    const handleRegistration = async (data) => {
-  try {
-    const result = await registerUser(data.email, data.password);
-    console.log(result.user);
-
-    const profileImg = data.photo[0];
-
-    const formData = new FormData();
-    formData.append('image', profileImg);
-
-    const image_API_URL = `https://api.imgbb.com/1/upload?key=${import.meta.env.VITE_image_host_key}`;
-    const res = await axios.post(image_API_URL, formData);
-
-    const imageURL = res.data.data.url;
-
-    await updateUserProfile({
-      displayName: data.name,
-      photoURL: imageURL
+        // saveOrUpdateUser
+        await saveOrUpdateUser({
+      name: data.name,
+      email: data.email,
+      image: imageURL
     });
 
-    toast.success('Registration Successful !!');
-    navigate(location?.state || '/');
 
-  } catch (error) {
-    console.log(error);
-    toast.error('Registration Failed !!');
-  }
-};
+        await updateUserProfile({
+          displayName: data.name,
+          photoURL: imageURL
+        });
 
+        toast.success('Registration Successful !!');
+        navigate(location?.state || '/');
+
+      } catch (error) {
+        console.log(error);
+        toast.error('Registration Failed !!');
+      }
+    };
+
+  
     return (
         <div className="min-h-screen flex items-center justify-center bg-gray-100">
 
