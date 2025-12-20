@@ -1,7 +1,7 @@
+ import React from "react";
 import { Link } from "react-router";
 
 const TicketsCard = ({ ticket }) => {
-  // console.log(ticket)
   const {
     _id,
     title,
@@ -12,10 +12,8 @@ const TicketsCard = ({ ticket }) => {
     perks = [],
     price,
     availableTickets,
-    bookingQuantity,
     departure,
-    totalPrice,
-    vendor= {},
+    vendor = {},
   } = ticket || {};
 
   return (
@@ -29,24 +27,20 @@ const TicketsCard = ({ ticket }) => {
           className="w-full h-full object-cover"
         />
       </figure>
-
       <div className="card-body space-y-2">
+        <h3 className="text-lg font-semibold text-gray-800">
+          {title}
+        </h3>
 
-        {/* title */}
-        <h3 className="text-lg font-semibold">{title}</h3>
-
-        {/* transport type */}
         <p className="text-sm text-gray-600">
           <strong>Transport:</strong> {transportType}
         </p>
 
-        {/* route */}
         <p className="text-sm text-gray-700">
           <strong>Route:</strong> {from} → {to}
         </p>
 
-        {/* perks */}
-        <div className="space-x-1">
+        <div className="flex flex-wrap gap-1">
           {perks.map((perk, index) => (
             <span
               key={index}
@@ -57,28 +51,24 @@ const TicketsCard = ({ ticket }) => {
           ))}
         </div>
 
-        {/* departure */}
         <p className="text-sm text-gray-600">
           <strong>Departure:</strong>{" "}
           {new Date(departure).toLocaleString()}
         </p>
 
         <div className="flex justify-between items-center">
-          {/* available tickets */}
-          <p className="text-lg font-normal">
+          <p className="text-sm">
             <strong>Available:</strong> {availableTickets}
           </p>
 
-          {/* price */}
           <p className="text-lg font-bold text-primary">
-            ৳ {price}
+            $ {price}
             <span className="text-sm font-normal text-gray-500">
               {" "} / ticket
             </span>
           </p>
         </div>
 
-        {/* see deatails btn*/}
         <Link
           to={`/ticket/${_id}`}
           className="btn btn-primary btn-sm w-full mt-2"
@@ -87,25 +77,20 @@ const TicketsCard = ({ ticket }) => {
         </Link>
       </div>
 
-      {/* <div className="flex justify-between items-center">
-        <h3 className="text-xs">Vendor: {vendor.name}</h3>
-        <h3 className="text-xs">Email: {vendor.email}</h3>
-      </div> */}
-      
-      {/* vendor info */}
-      {vendor.name && (
-        <div className="flex justify-between items-center gap-2 mt-2 p-2 border-t border-gray-200">
-          {vendor.image && (
+      {/* Vvendor */}
+      {vendor?.name && (
+        <div className="flex items-center gap-2 p-3 border-t border-gray-200">
+          {/* {vendor.image && (
             <img
               src={vendor.image}
               alt={vendor.name}
-              className="w-6 h-6 rounded-full"
+              className="w-8 h-8 rounded-full"
               referrerPolicy="no-referrer"
             />
-          )}
-          <div className="text-xs">
-            <div>Vendor: {vendor.name}</div>
-            <div>Email: {vendor.email}</div>
+          )} */}
+          <div className="text-xs text-gray-600">
+            <p><strong>Vendor:</strong> {vendor.name}</p>
+            <p>{vendor.email}</p>
           </div>
         </div>
       )}

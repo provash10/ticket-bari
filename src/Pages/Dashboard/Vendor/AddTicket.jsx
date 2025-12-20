@@ -7,15 +7,10 @@ import axios from 'axios';
 import { useMutation } from '@tanstack/react-query';
 import LoadingSpinner from '../../../LoaderPage/LoadingSpinner';
 
-
-
 const AddTicket = () => {
     const { user } = useAuth();
-    // console.log(vendor);
 
-    //useMutation hook
-    // const mutation = useMutation
-    const { mutateAsync, isPending, isError,reset: mutationReset } = useMutation({
+    const { mutateAsync, isPending, isError, reset: mutationReset } = useMutation({
         mutationFn: async (payload) => {
             const res = await axios.post(
                 `${import.meta.env.VITE_API_URL}/tickets`,
@@ -24,34 +19,31 @@ const AddTicket = () => {
             return res.data;
         },
         onSuccess: data => {
-            console.log(data)
+            console.log(data);
             toast.success("Ticket added successfully");
-            //navigate to my inventory page/ 
-            mutationReset()
+            mutationReset();
         },
         onError: error => {
-            console.log(error)
-            // toast.error("Failed to add ticket");
+            console.log(error);
+            toast.error("Failed to add ticket");
         },
         onMutate: payload => {
-            console.log('I will post this data--->', payload)
+            console.log('Posting this data--->', payload);
         },
         onSettled: (data, error) => {
-            console.log('I am from onSettled--->', data)
-            if (error) console.log(error)
+            console.log('From onSettled--->', data);
+            if (error) console.log(error);
         },
         retry: 3,
     });
 
-    //react hook form
-    const { register, handleSubmit, watch, formState: { errors }, reset }= useForm();
-    // const [loading, setLoading] = useState(false);
+    const { register, handleSubmit, watch, formState: { errors }, reset } = useForm();
 
     const onSubmit = async (data) => {
         try {
             const imageFile = data.image[0];
             const imageUrl = await imageUpload(imageFile);
-            reset();
+            
             const ticketData = {
                 title: data.title,
                 from: data.from,
@@ -63,36 +55,32 @@ const AddTicket = () => {
                 departure: data.departure,
                 perks: data.perks || [],
                 image: imageUrl,
+                status: "approved",  // ডিফল্ট
                 vendor: {
                     image: user?.photoURL,
                     name: user?.displayName,
                     email: user?.email,
                 },
-
+                createdAt: new Date().toISOString()  // নতুন ticket creation time
             };
 
-
-            // const response = await axios.post(`${import.meta.env.VITE_API_URL}/tickets`, ticketData);
-            // console.log(response.data);
-
-            // toast.success("Ticket added successfully!");
-            await mutateAsync(ticketData)
+            reset();  // form reset
+            await mutateAsync(ticketData);  // server-এ post
         } catch (error) {
             console.error(error);
             toast.error("Failed to add ticket. Please try again.");
         }
     };
 
-    if (isPending) return <LoadingSpinner></LoadingSpinner>
-    if (isError) return <ErrorPages></ErrorPages>
-
+    if (isPending) return <LoadingSpinner />;
+    if (isError) return <div>Error occurred while adding ticket.</div>;
 
     return (
         <div className="max-w-4xl mx-auto p-6 bg-white shadow-md rounded-lg mt-6">
             <h2 className="text-3xl font-bold mb-6 text-center">Add New Ticket</h2>
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-                {/* ticket title */}
+                {/* Title */}
                 <div>
                     <label className="block font-semibold mb-1">Ticket Title</label>
                     <input
@@ -107,28 +95,26 @@ const AddTicket = () => {
                 {/* From & To */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label className="block font-semibold mb-1">From (Location)</label>
+                        <label className="block font-semibold mb-1">From</label>
                         <input
                             type="text"
                             {...register("from", { required: true })}
                             className="input w-full border border-gray-300 rounded p-2"
-                            placeholder="From"
                         />
                         {errors.from && <p className="text-red-600">From location is required</p>}
                     </div>
                     <div>
-                        <label className="block font-semibold mb-1">To (Location)</label>
+                        <label className="block font-semibold mb-1">To</label>
                         <input
                             type="text"
                             {...register("to", { required: true })}
                             className="input w-full border border-gray-300 rounded p-2"
-                            placeholder="To"
                         />
                         {errors.to && <p className="text-red-600">To location is required</p>}
                     </div>
                 </div>
 
-                {/* transport type & price */}
+                {/* Transport Type & Price */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label className="block font-semibold mb-1">Transport Type</label>
@@ -148,45 +134,23 @@ const AddTicket = () => {
                         <label className="block font-semibold mb-1">Price (per unit)</label>
                         <input
                             type="number"
-                            {...register("price", {
-                                required: 'Price is required',
-                                min: { value: 0, message: 'Price must be positive' },
-                            })}
+                            {...register("price", { required: true, min: 0 })}
                             className="input w-full border border-gray-300 rounded p-2"
-                            placeholder="Price"
                         />
                         {errors.price && <p className="text-red-600">Price is required</p>}
                     </div>
                 </div>
 
-                {/* Ticket Quantity & departure - date/time */}
+                {/* Quantity & Departure */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label className="block font-semibold mb-1">Ticket Quantity</label>
                         <input
                             type="number"
-                            {...register("quantity", {
-                                required: 'Quantity is required',
-                                min: { value: 1, message: 'Quantity must be at least 1' },
-                            })}
+                            {...register("quantity", { required: true, min: 1 })}
                             className="input w-full border border-gray-300 rounded p-2"
-                            placeholder="Total tickets available"
                         />
                         {errors.quantity && <p className="text-red-600">Quantity is required</p>}
-                    </div>
-
-                    {/* total price */}
-                    <div>
-                        <label className="block font-semibold mb-1">Total Price</label>
-                        <input
-                            type="number"
-                            value={
-                                (Number(watch("price")) || 0) *
-                                (Number(watch("quantity")) || 0)
-                            }
-                            className="input w-full border border-gray-300 rounded p-2 bg-gray-100"
-                            disabled
-                        />
                     </div>
                     <div>
                         <label className="block font-semibold mb-1">Departure Date & Time</label>
@@ -195,51 +159,37 @@ const AddTicket = () => {
                             {...register("departure", { required: true })}
                             className="input w-full border border-gray-300 rounded p-2"
                         />
-                        {errors.departure && <p className="text-red-600">Departure date/time is required</p>}
+                        {errors.departure && <p className="text-red-600">Departure is required</p>}
+                    </div>
+                    <div>
+                        <label className="block font-semibold mb-1">Total Price</label>
+                        <input
+                            type="number"
+                            value={
+                                (Number(watch("price")) || 0) * (Number(watch("quantity")) || 0)
+                            }
+                            className="input w-full border border-gray-300 rounded p-2 bg-gray-100"
+                            disabled
+                        />
                     </div>
                 </div>
 
-                {/* perks*/}
+                {/* Perks */}
                 <div>
                     <label className="block font-semibold mb-1">Perks</label>
                     <div className="flex flex-wrap gap-4">
-                        <label className="flex items-center gap-2">
-                            <input type="checkbox" {...register("perks")} value="AC" />
-                            AC
-                        </label>
-                        <label className="flex items-center gap-2">
-                            <input type="checkbox" {...register("perks")} value="Breakfast" />
-                            Breakfast
-                        </label>
-                        <label className="flex items-center gap-2">
-                            <input type="checkbox" {...register("perks")} value="WiFi" />
-                            WiFi
-                        </label>
-                        <label className="flex items-center gap-2">
-                            <input type="checkbox" {...register("perks")} value="Meal" />
-                            Meal
-                        </label>
+                        {["AC", "Breakfast", "WiFi", "Meal"].map((perk) => (
+                            <label key={perk} className="flex items-center gap-2">
+                                <input type="checkbox" {...register("perks")} value={perk} />
+                                {perk}
+                            </label>
+                        ))}
                     </div>
                 </div>
 
-                {/* image */}
-                {/* <div>
-                    <label className="block font-semibold mb-1">Image URL</label>
-                    <input
-                        type="text"
-                        {...register("image", {
-                            required: 'Image is required',
-                        })}
-                        className="input w-full border border-gray-300 rounded p-2"
-                        placeholder="Enter image URL"
-                    />
-                    {errors.image && <p className="text-red-600">Image URL is required</p>}
-                </div> */}
-
-                {/* image */}
+                {/* Image Upload */}
                 <div className="p-4 w-full rounded-lg">
                     <label className="block font-semibold mb-2">Ticket Image</label>
-
                     <div className="border-4 border-dotted border-gray-300 rounded-lg py-6 text-center">
                         <label>
                             <input
@@ -252,17 +202,11 @@ const AddTicket = () => {
                                 Upload Image
                             </div>
                         </label>
-
-                        {errors.image && (
-                            <p className="text-red-600 text-sm mt-2">
-                                {errors.image.message}
-                            </p>
-                        )}
+                        {errors.image && <p className="text-red-600 text-sm mt-2">{errors.image.message}</p>}
                     </div>
                 </div>
 
-
-                {/* vendor  */}
+                {/* Vendor Info */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label className="block font-semibold mb-1">Vendor Name</label>
@@ -274,19 +218,11 @@ const AddTicket = () => {
                     </div>
                 </div>
 
-
+                {/* Submit */}
                 <div className="text-center mt-4">
-                    {/* <button type="submit" className="btn btn-primary w-full">
-                    {loading ? "Adding..." : "Add Ticket"}
-                </button> */}
-                    <button
-                        type="submit"
-                        className="btn btn-primary w-full"
-                        disabled={isPending}
-                    >
+                    <button type="submit" className="btn btn-primary w-full" disabled={isPending}>
                         {isPending ? "Adding..." : "Save & Continue"}
                     </button>
-
                 </div>
             </form>
         </div>

@@ -1,208 +1,126 @@
-import { useQuery } from "@tanstack/react-query";
+import React, { useState, useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
-import { useEffect, useState } from "react";
 import { useParams } from "react-router";
 import LoadingSpinner from "../../LoaderPage/LoadingSpinner";
 import { Button } from "@headlessui/react";
 import BookModal from "../Modal/BookModal";
 import Heading from "../Shared/Heading";
-import toast from "react-hot-toast";
 import useAuth from "../../Hooks/useAuth";
 
 const TicketDetails = () => {
   const { user } = useAuth();
   const { id } = useParams();
-  // console.log(id) //checked
+  const queryClient = useQueryClient();
 
   const [isOpen, setIsOpen] = useState(false);
   const [countdown, setCountdown] = useState("");
   const [selectedPerks, setSelectedPerks] = useState([]);
   const [quantity, setQuantity] = useState(1);
 
-  const { data: ticket = {}, isLoading, refetch } = useQuery({
+  const { data: ticket = {}, isLoading } = useQuery({
     queryKey: ["ticket", id],
     queryFn: async () => {
-      const res = await axios(
-        `${import.meta.env.VITE_API_URL}/tickets/${id}`
-      );
-      toast.success("Booking successful!");
+      const res = await axios(`${import.meta.env.VITE_API_URL}/tickets/${id}`);
       return res.data;
     },
   });
 
-  // console.log(ticket)
-  const {
-    _id,
-    title,
-    image,
-    from,
-    to,
-    transportType,
-    perks = [],
-    price,
-    availableTickets,
-    bookingQuantity,
-    departure,
-    totalPrice,
-    vendor = {},
-  } = ticket || {};
+  const { title, image, from, to, transportType, perks = [], price, availableTickets, departure, vendor = {} } = ticket || {};
+  const totalPrice = price * quantity;
 
-  const calculatedTotalPrice = price * quantity;
-
-  // Countdown timer
   useEffect(() => {
-    if (!ticket.departure) return;
+    if (!departure) return;
     const interval = setInterval(() => {
       const now = new Date().getTime();
-      const departure = new Date(ticket.departure).getTime();
-      const distance = departure - now;
-
-      if (distance <= 0) {
+      const dep = new Date(departure).getTime();
+      const diff = dep - now;
+      if (diff <= 0) {
         setCountdown("Departed");
         clearInterval(interval);
       } else {
-        const hours = Math.floor(
-          (distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
-        );
-        const minutes = Math.floor(
-          (distance % (1000 * 60 * 60)) / (1000 * 60)
-        );
-        const seconds = Math.floor(
-          (distance % (1000 * 60)) / 1000
-        );
-        setCountdown(`${hours}h ${minutes}m ${seconds}s`);
+        const h = Math.floor(diff / (1000 * 60 * 60));
+        const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const s = Math.floor((diff % (1000 * 60)) / 1000);
+        setCountdown(`${h}h ${m}m ${s}s`);
       }
     }, 1000);
-
     return () => clearInterval(interval);
-  }, [ticket.departure]);
+  }, [departure]);
 
-  if (isLoading) return <LoadingSpinner></LoadingSpinner>;
+  if (isLoading) return <LoadingSpinner />;
 
-  const departureDate = new Date(ticket.departure);
-  const now = new Date();
-  const isDeparturePassed = departureDate < now;
-  const isSoldOut = ticket.availableTickets === 0;
-  const disableBook = isDeparturePassed || isSoldOut;
+  const isExpired = new Date(departure) < new Date();
+  const isSoldOut = availableTickets === 0;
 
   return (
-    <div className="max-w-6xl mx-auto px-4">
-      <div className="flex flex-col lg:flex-row gap-6 items-center">
-
-        {/* left */}
-        {/* <div className="border border-gray-400  p-2 flex-1 overflow-hidden rounded-xl flex justify-center"> */}
-        <div className=" border-gray-400  flex-1 flex items-center flex-col gap-2 text-center">
-          <img
-            src={image}
-            alt={title}
-            className="
-              w-full
-              max-w-sm
-              sm:max-w-md
-              md:max-w-lg
-              h-56
-              sm:h-64
-              md:h-72
-              object-cover
-            "
-          />
+    <div className="max-w-6xl mx-auto px-4 py-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="bg-white rounded-2xl shadow border overflow-hidden">
+          <img src={image} alt={title} className="w-full h-72 object-cover" />
         </div>
 
-        {/* info */}
-        <div className="border border-gray-400 rounded-2xl  flex-1 flex items-center flex-col gap-2 text-center">
-          {/* <Heading title={title} subtitle={`Route: ${from} → ${to}`} /> */}
-          <Heading title={title} subtitle={`Route: ${from} - ${to}`} />
+        <div className="bg-white rounded-2xl shadow border p-6 space-y-4">
+          <Heading title={title} subtitle={`Route: ${from} → ${to}`} />
 
-          <p>
-            <strong>Transport:</strong> {transportType}
-          </p>
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            <p><strong>Transport:</strong> {transportType}</p>
+            <p><strong>Departure:</strong> {new Date(departure).toLocaleString()}</p>
+            <p><strong>Available:</strong> {availableTickets}</p>
+            <p className="text-red-600 font-semibold">Countdown: {countdown}</p>
+          </div>
 
-          {/* vendor */}
-          {vendor.name && (
-            <div className="flex justify-between items-center p-2 border-t border-gray-200">
-              {vendor.image && (
-                <img
-                  src={vendor.image}
-                  alt={vendor.name}
-                  className="w-5 h-5 sm:w-6 sm:h-6 rounded-full"
-                  referrerPolicy="no-referrer"
-                />
-              )}
-              <div className="text-xs text-left">
-                <div>Vendor: {vendor.name}</div>
-                <div>Email: {vendor.email}</div>
+          {vendor?.name && (
+            <div className="flex items-center gap-3 border-t pt-4">
+              <div className="text-sm">
+                <p className="font-semibold">{vendor.name}</p>
+                <p className="text-gray-500">{vendor.email}</p>
               </div>
             </div>
           )}
 
-          <p>
-            <strong>Departure:</strong>{" "}
-            {departureDate.toLocaleString()} ({countdown})
-          </p>
-
-          <p>
-            <strong>Available Tickets:</strong> {availableTickets}
-          </p>
-
-          <div className="flex flex-wrap justify-center gap-2">
-            <p className="text-xl font-bold">Perks : </p>
-            {perks.map((perk, i) => (
-              <label
-                key={i}
-                className="badge badge-outline cursor-pointer text-xs sm:text-sm"
-              >
-                <input
-                  type="checkbox"
-                  value={perk}
-                  checked={selectedPerks.includes(perk)}
-                  onChange={(e) => {
-                    if (e.target.checked) {
-                      setSelectedPerks([...selectedPerks, perk]);
-                    } else {
-                      setSelectedPerks(
-                        selectedPerks.filter((p) => p !== perk)
-                      );
-                    }
-                  }}
-                  className="mr-1"
-                />
-                {perk}
-              </label>
-            ))}
+          <div>
+            <p className="font-semibold mb-2">Perks</p>
+            <div className="flex flex-wrap gap-2">
+              {perks.map((perk, i) => (
+                <label key={i} className="badge badge-outline cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="mr-1"
+                    checked={selectedPerks.includes(perk)}
+                    onChange={(e) => {
+                      if (e.target.checked) setSelectedPerks([...selectedPerks, perk]);
+                      else setSelectedPerks(selectedPerks.filter(p => p !== perk));
+                    }}
+                  />
+                  {perk}
+                </label>
+              ))}
+            </div>
           </div>
 
-          <div className="flex justify-between items-center gap-8">
-            <p className="text-lg sm:text-xl font-bold bg-amber-400 px-3 py-1 rounded-full">
-              Price: ৳ {price}
-            </p>
-
-            {/* booking quantity */}
+          <div className="flex justify-between items-center">
             <div className="flex items-center gap-2">
-              <span className="text-base sm:text-lg font-semibold">
-                Quantity:
-              </span>
+              <span className="font-semibold">Quantity</span>
               <input
                 type="number"
                 min={1}
                 max={availableTickets}
                 value={quantity}
-                onChange={(e) =>
-                  setQuantity(Number(e.target.value))
-                }
-                className="w-14 sm:w-16 border rounded px-2 py-1 text-sm"
+                onChange={(e) => setQuantity(Number(e.target.value))}
+                className="w-16 border rounded px-2 py-1"
               />
             </div>
+
+            <p className="text-xl font-bold text-primary">$ {price} / ticket</p>
           </div>
 
-          {/* total price */}
-          <p className="text-base sm:text-lg font-bold text-green-600">
-            Total Price: ৳ {calculatedTotalPrice}
-          </p>
+          <p className="text-lg font-bold text-green-600">Total: $ {totalPrice}</p>
 
           <Button
             onClick={() => setIsOpen(true)}
-            disabled={disableBook}
-            className="w-1/2 btn btn-primary btn-sm sm:btn-md mt-2"
+            disabled={isExpired || isSoldOut}
+            className="btn btn-primary w-full"
           >
             {isSoldOut ? "Sold Out" : "Book Now"}
           </Button>
@@ -215,8 +133,8 @@ const TicketDetails = () => {
         closeModal={() => setIsOpen(false)}
         selectedPerks={selectedPerks}
         quantity={quantity}
-        totalPrice={calculatedTotalPrice}
-        refetch={refetch}
+        totalPrice={totalPrice}
+        queryClient={queryClient} 
         user={user}
       />
     </div>

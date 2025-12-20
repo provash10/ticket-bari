@@ -1,24 +1,23 @@
-import React from "react";
+ import React from "react";
 import useAuth from "../../../Hooks/useAuth";
 import { NavLink } from "react-router";
 import Navbar from "../../../Components/Header/Navbar";
+import LoadingSpinner from "../../../LoaderPage/LoadingSpinner";
 
 const Sidebar = () => {
-    const { userDB } = useAuth();
-    // const role = userDB?.role;
+    const { user, isRoleLoading } = useAuth();
+    // const [role,isLoading] = userDB?.role;
     // const role = userDB?.role === "admin" 
     //     ? "admin" 
     //     : userDB?.role === "vendor" 
     //         ? "vendor" 
     //         : "user";
 
-    // const role = "user";
+    const role = "user";
     // const role = "vendor";
-    const role = "admin";
+    // const role = "admin";
 
-
-
-
+       if (isRoleLoading) return <LoadingSpinner />;
 
     return (
         <div>
@@ -49,6 +48,11 @@ const Sidebar = () => {
                         <li>
                             <NavLink to="transactions" className="sidebar-link">
                                 Transaction History
+                            </NavLink>
+                        </li>
+                        <li>
+                            <NavLink to="become-vendor" className="sidebar-link">
+                                Become A Vendor
                             </NavLink>
                         </li>
                     </ul>
@@ -107,3 +111,4 @@ const Sidebar = () => {
 };
 
 export default Sidebar;
+

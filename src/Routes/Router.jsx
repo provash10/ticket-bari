@@ -6,18 +6,23 @@ import Login from "../Pages/Auth/Login";
 import Register from "../Pages/Auth/Register";
 import ErrorPages from "../LoaderPage/ErrorPages";
 import PrivateRoute from "./PrivateRoute";
-
 import DashboardLayout from "../Layouts/DashboardLayout";
-import UserProfile from "../Pages/Dashboard/User/UserProfile";
-import MyBookedTickets from "../Pages/Dashboard/User/MyBookedTickets";
+
 
 import AddTicket from "../Pages/Dashboard/Vendor/AddTicket";
-import Profile from "../Pages/Dashboard/Profile/Profile";
+
 import TicketDetails from "../Components/Tickets/TicketDetails";
 import AllTickets from "../Pages/Home/AllTickets";
 import PaymentSuccess from "../Components/Payment/PaymentSuccess";
 import RequestedBookings from "../Pages/Dashboard/Vendor/RequestedBookings";
 import ManageTickets from "../Pages/Dashboard/Admin/ManageTickets";
+import Profile from "../Pages/Dashboard/Profile/Profile";
+import BecomeVendor from "../Pages/Dashboard/User/BecomeVendor";
+import MyBookedTickets from "../Pages/Dashboard/User/MyBookedTickets";
+import TransactionHistory from "../Pages/Dashboard/User/TransactionHistory";
+// import Payment from "../Pages/Dashboard/OnlinePayment/Payment";
+
+
 
 export const router = createBrowserRouter([
     //MainLayout
@@ -35,12 +40,12 @@ export const router = createBrowserRouter([
                 element: <AllTickets></AllTickets>,
             },
             {
-                path: '/ticket/:id',
+                path: 'ticket/:id',
                 element: <TicketDetails></TicketDetails>,
             },
             {
-                path:'/payment-success',
-                element:<PaymentSuccess></PaymentSuccess>,
+                path: 'payment-success',
+                element: <PaymentSuccess></PaymentSuccess>,
             },
         ]
     },
@@ -65,31 +70,52 @@ export const router = createBrowserRouter([
     {
         path: '/dashboard',
         element:
-           ( <PrivateRoute>
+            (<PrivateRoute>
                 <DashboardLayout></DashboardLayout>
             </PrivateRoute>),
 
         children: [
             {
                 index: true,
-                element: <Profile />
+                element: <Profile></Profile>  
             },
 
+            // {
+            //     path:'payment/:bookingId',
+            //     element: <Payment></Payment>,
+            // },
+
             // User/customer pages
-            { path: "my-bookings", element: <MyBookedTickets /> },
-            // { path: "transactions", element: <TransactionHistory /> },
+            { 
+                path: "my-bookings", 
+                 element: <MyBookedTickets></MyBookedTickets>
+            },
+
+            { 
+                path: "become-vendor", 
+                element: <BecomeVendor></BecomeVendor>,
+            },
+            { 
+                path: "transactions", 
+                element: <TransactionHistory></TransactionHistory>
+            },
 
             // Vendor pages
-            { path: "add-ticket", element: <AddTicket /> },
+            {
+                path: "add-ticket",
+                element: <AddTicket /> 
+            },
             // { path: "my-tickets", element: <MyAddedTickets /> },
-            { path: "requested-bookings",
+            {
+                path: "requested-bookings",
                 element: <RequestedBookings></RequestedBookings>
             },
             // { path: "revenue-overview", element: <RevenueOverview /> },
 
             // Admin pages
-            { path: "manage-tickets",
-                 element: <ManageTickets></ManageTickets>,
+            {
+                path: "manage-tickets",
+                element: <ManageTickets></ManageTickets>,
             },
             // { path: "manage-users", element: <ManageUsers /> },
             // { path: "advertise", element: <AdvertiseTickets /> },

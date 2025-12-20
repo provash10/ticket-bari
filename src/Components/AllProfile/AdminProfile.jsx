@@ -3,7 +3,7 @@ import React from 'react';
 const AdminProfile = () => {
     return (
         <div>
-            <h3>admin profile</h3>
+            <h3>Create Admin Profile</h3>
         </div>
     );
 };

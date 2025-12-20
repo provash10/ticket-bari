@@ -1,0 +1,1347 @@
+const express = require("express");
+const cors = require("cors");
+const app = express();
+require("dotenv").config();
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
+const port = process.env.PORT || 3000;
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+const admin = require("firebase-admin");
+
+// const serviceAccount = require("./ticketbari-fbadminsdk.json");
+// const serviceAccount =(process.env.FB_SERVICE_KEY)
+const decoded = Buffer.from(process.env.FB_SERVICE_KEY, "base64").toString(
+  "utf8"
+);
+const serviceAccount = JSON.parse(decoded);
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+});
+
+// middleware
+app.use(express.json());
+app.use(
+  cors({
+    origin: [process.env.CLIENT_DOMAIN],
+    credentials: true,
+    optionsSuccessStatus: 200,
+  })
+);
+
+// jwt middlewares
+// const verifyJWT = async (req, res, next) => {
+//   const token = req?.headers?.authorization?.split(" ")[1];
+//   console.log(token);
+
+//   if (!token) {
+//     return res.status(401).send({ message: "Unauthorized Access!" });
+//   }
+
+//   try {
+//     const decoded = await admin.auth().verifyIdToken(token);
+//     req.tokenEmail = decoded.email;
+//     console.log(decoded);
+//     next();
+//   } catch (err) {
+//     console.log(err);
+//     return res.status(401).send({ message: "Unauthorized Access!", err });
+//   }
+// };
+
+const verifyJWT = async (req, res, next) => {
+  try {
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader) {
+      return res.status(401).json({
+        success: false,
+        message: "No token provided",
+      });
+    }
+
+    if (!authHeader.startsWith("Bearer ")) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid token format",
+      });
+    }
+
+    const token = authHeader.split(" ")[1];
+    const decodedToken = await admin.auth().verifyIdToken(token);
+
+    req.user = {
+      email: decodedToken.email,
+      uid: decodedToken.uid,
+      name: decodedToken.name || decodedToken.email.split("@")[0],
+    };
+
+    req.tokenEmail = decodedToken.email;
+
+    console.log("JWT Verified for:", req.user.email);
+    next();
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+
+//mongodb
+// const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.znmkoxj.mongodb.net/?appName=Cluster0`;
+
+// Create a MongoClient with a MongoClientOptions object to set the Stable API version
+
+const client = new MongoClient(process.env.MONGODB_URL, {
+  serverApi: {
+    version: ServerApiVersion.v1,
+    strict: true,
+    deprecationErrors: true,
+  },
+});
+async function run() {
+  try {
+    // Connect the client to the server	(optional starting in v4.7)
+    // await client.connect();
+
+    const db = client.db("ticketbari_user_db");
+    const ticketsCollection = db.collection("tickets");
+    const usersCollection = db.collection("users");
+    const bookingsCollection = db.collection("bookings");
+
+    //old ticket
+    const result = await ticketsCollection.updateMany(
+      { createdAt: { $exists: false } },
+      { $set: { createdAt: new Date() } }
+    );
+
+    await ticketsCollection.updateMany(
+      { availableTickets: { $exists: false } },
+      { $set: { availableTickets: 0 } }
+    );
+
+    app.post("/tickets", async (req, res) => {
+      const ticketData = { ...req.body, createdAt: new Date() };
+      console.log(ticketData);
+      const result = await ticketsCollection.insertOne(ticketData);
+
+      res.send(result);
+    });
+
+    // All tickets
+    app.get("/tickets", async (req, res) => {
+      const tickets = await ticketsCollection
+        .find()
+        .sort({ createdAt: -1 })
+        .toArray();
+      res.send(tickets);
+    });
+
+    // Single ticket findOne
+    app.get("/tickets/:id", async (req, res) => {
+      const { id } = req.params;
+      try {
+        const ticket = await ticketsCollection.findOne({
+          _id: new ObjectId(id),
+        });
+        if (!ticket)
+          return res.status(404).send({ message: "Ticket not found" });
+        res.send(ticket);
+      } catch (err) {
+        console.error(err);
+        res.status(500).send({ message: "Server Error", error: err });
+      }
+    });
+
+    // save or update a user in db 6 way
+    app.post("/user", async (req, res) => {
+      const userData = req.body;
+      console.log(userData);
+      userData.created_at = new Date().toISOString();
+      userData.last_loggedIn = new Date().toISOString();
+      userData.role = "customer";
+
+      const query = {
+        email: userData.email,
+      };
+
+      // const alradyExists = await usersCollection.findOne({
+      //   query,
+      // });
+      const alradyExists = await usersCollection.findOne(query);
+
+      console.log("User Already Exists---->", !!alradyExists);
+      if (alradyExists) {
+        console.log("Updating user info...");
+
+        const result = await usersCollection.updateOne(query, {
+          $set: {
+            last_loggedIn: new Date().toISOString(),
+          },
+        });
+
+        const options = { upsert: true };
+
+        return res.send(result);
+      }
+      console.log("Saving new user info...");
+
+      const result = await usersCollection.insertOne(userData);
+      res.send(result);
+    });
+    // app.post("/user", async (req, res) => {
+    //   const userData = req.body;
+    //   const result = await usersCollection.updateOne(
+    //     { email: userData.email },
+    //     { $set: userData },
+    //     { upsert: true }
+    //   );
+    //   res.send(result);
+    // });
+
+    //stripe payment system
+
+    app.post("/create-checkout-session", async (req, res) => {
+      try {
+        const paymentInfo = req.body;
+        console.log("Payment info:", paymentInfo);
+
+        const session = await stripe.checkout.sessions.create({
+          line_items: [
+            {
+              price_data: {
+                currency: "usd",
+                product_data: {
+                  name: paymentInfo?.title || "Ticket",
+                  description: `Booking for ${paymentInfo?.title}`,
+                  images: [
+                    paymentInfo?.vendor?.image ||
+                      "https://via.placeholder.com/150",
+                  ],
+                },
+                unit_amount: paymentInfo?.price * 100,
+              },
+              quantity: paymentInfo?.quantity,
+            },
+          ],
+          customer_email: paymentInfo?.user?.email,
+          mode: "payment",
+          metadata: {
+            ticketId: paymentInfo.ticketId,
+            userId: paymentInfo.user.uid, //uid fbase
+            quantity: paymentInfo.quantity.toString(),
+            // customer: {
+            //   name:paymentInfo.customer.name,
+            //   email:paymentInfo.customer.email,
+            // }
+          },
+          // success_url: `${process.env.CLIENT_DOMAIN}/payment-success`,
+          success_url: `${process.env.CLIENT_DOMAIN}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
+          cancel_url: `${process.env.CLIENT_DOMAIN}/tickets/${paymentInfo?.ticketId}`,
+        });
+
+        res.status(200).send({ url: session.url });
+      } catch (err) {
+        console.error("Stripe error:", err);
+        res.status(500).send({ message: "Internal Server Error", error: err });
+      }
+    });
+
+    app.post("/payment-success", async (req, res) => {
+      try {
+        const { sessionId } = req.body;
+
+        if (!sessionId) {
+          return res.status(400).send({ message: "Session ID missing" });
+        }
+
+        const session = await stripe.checkout.sessions.retrieve(sessionId);
+        console.log("Stripe session:", session);
+
+        if (!session) {
+          return res.status(400).send({ message: "Invalid Stripe session" });
+        }
+
+        const ticketId = session.metadata.ticketId;
+        const quantity = Number(session.metadata.quantity);
+        console.log("Quantity to reduce:", quantity);
+
+        const ticket = await ticketsCollection.findOne({
+          _id: new ObjectId(ticketId),
+        });
+
+        if (!ticket) {
+          return res.status(400).send({ message: "Ticket not found" });
+        }
+
+        if (session.payment_status !== "paid") {
+          return res.status(400).send({ message: "Payment not completed" });
+        }
+
+        // check duplicate-booking
+        const existingBooking = await bookingsCollection.findOne({
+          transactionId: session.payment_intent,
+        });
+        if (existingBooking) {
+          return res.status(200).send({
+            message: "Booking already exists",
+            booking: existingBooking,
+          });
+        }
+
+        // checking avaiable tickets
+        if (ticket.availableTickets < quantity) {
+          return res.status(400).send({
+            message: `Not enough tickets available. Only ${ticket.availableTickets} left.`,
+          });
+        }
+
+        // reduce available tickets after pay
+        const updateResult = await ticketsCollection.updateOne(
+          { _id: new ObjectId(ticketId) },
+          { $inc: { availableTickets: -quantity } }
+        );
+
+        console.log("Ticket quantity reduced:", updateResult);
+
+        const BookingInfo = {
+          ticketId,
+          transactionId: session.payment_intent,
+          customer: {
+            email: session.customer_email,
+            uid: session.metadata.userId,
+          },
+          quantity,
+          status: "paid",
+          vendor: ticket.vendor,
+          title: ticket.title,
+          price: ticket.price,
+          totalPrice: session.amount_total / 100,
+          createdAt: new Date(),
+          image: ticket?.image,
+        };
+
+        const result = await bookingsCollection.insertOne(BookingInfo);
+        console.log("Booking saved:", result);
+
+        return res.send({
+          transactionId: session.payment_intent,
+          bookingId: result.insertedId,
+          message: "Booking successful and ticket quantity updated",
+        });
+      } catch (err) {
+        console.error("Payment success error:", err);
+        return res.status(500).send({ message: "Server error", error: err });
+      }
+    });
+
+    //get all bookings for customer/user by email /myorders
+    // app.get("/my-bookings",verifyJWT, async (req, res) => {
+    //   // const email = req.params.email;
+    //   const result = await bookingsCollection
+    //     .find({ "customer.email": req.tokenEmail })
+    //     .toArray();
+    //   res.send(result);
+    // });
+
+    // My bookings route
+    // app.get("/my-bookings", verifyJWT, async (req, res) => {
+    //   try {
+    //     const email = req.user.email;
+    //     console.log("Fetching bookings for:", email);
+
+    //     res.send(bookings);
+    //   } catch (error) {
+    //     console.error("Error fetching bookings:", error);
+    //     res.status(500).send({ message: "Server error" });
+    //   }
+    // });
+
+    app.get("/my-bookings", verifyJWT, async (req, res) => {
+  try {
+    const email = req.user.email;
+    const bookings = await bookingsCollection
+      .find({ "customer.email": email })
+      .toArray();
+    res.send(bookings);
+  } catch (error) {
+    res.status(500).send({ message: "Server error" });
+  }
+});
+
+    //get all bookings for vendor by email
+    app.get("/manage-bookings/:email", async (req, res) => {
+      const email = req.params.email;
+      const result = await bookingsCollection
+        .find({ "vendor.email": email })
+        .toArray();
+      res.send(result);
+    });
+
+    //get all tickets for vendor by email
+    app.get("/my-added-tickets/:email", async (req, res) => {
+      const email = req.params.email;
+      const result = await ticketsCollection
+        .find({ "vendor.email": email })
+        .toArray();
+      res.send(result);
+    });
+
+    // users Role api
+    // app.get("/user/role/:email", verifyJWT, async (req, res) => {
+    //   // console.log(req.tokenEmail)
+    //   // const email = req.params.email;
+    //   const result = await usersCollection.findOne({ email : req.tokenEmail });
+    //   res.send({ role: result?.role });
+    // });
+
+    app.get("/user/role", verifyJWT, async (req, res) => {
+      try {
+        const result = await usersCollection.findOne({
+          email: req.user.email,
+        });
+        // ... rest of the code
+        res.send({ role: result.role });
+      } catch (error) {
+        res.status(500).send({ message: "Server error" });
+      }
+    });
+
+    // Send a ping to confirm a successful connection
+    await client.db("admin").command({ ping: 1 });
+    console.log(
+      "Pinged your deployment. You successfully connected to MongoDB!"
+    );
+  } finally {
+    // Ensures that the client will close when you finish/error
+    // await client.close();
+  }
+}
+run().catch(console.dir);
+
+app.get("/", (req, res) => {
+  res.send("Ticket Bari is active.");
+});
+
+app.listen(port, () => {
+  console.log(`Example app listening on port ${port}`);
+}); # DB_USER=ticketbari_user_db
+# DB_PASS=LPhW2j1Qw9pbK5AT
+
+MONGODB_URL=mongodb+srv://ticketbari_user_db:LPhW2j1Qw9pbK5AT@cluster0.znmkoxj.mongodb.net/?appName=Cluster0  
+FB_SERVICE_KEY=ewogICJ0eXBlIjogInNlcnZpY2VfYWNjb3VudCIsCiAgInByb2plY3RfaWQiOiAic21hcnQtZGVhbHMtMTQ3YzIiLAogICJwcml2YXRlX2tleV9pZCI6ICI3ZDkxMGVlZWI5N2Y5ZDk1ZmY5NDJiMDc1ZTk5YzBjZTNmZTJlY2UwIiwKICAicHJpdmF0ZV9rZXkiOiAiLS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tXG5NSUlFdkFJQkFEQU5CZ2txaGtpRzl3MEJBUUVGQUFTQ0JLWXdnZ1NpQWdFQUFvSUJBUUNHOTdRdzc4a01meitSXG53bi9NOU5GeHJaa1pSdEwvTzNLZXl0UWdTSlRSODBtZXNTbkY3VUxWdlFGUUw2dTFLYWIzMXNnRDBPUzN4S3A1XG5JTFlCODdQOFlIQW1ucnJUMndVdnV4V1VEKzMvbVJzZXlPKzcxa1RUUmFWeW5UYTMrOTFOOG5KbDlkbmNncStiXG4rbHBhNGJZc01RZFdscEowUTdWVmplbzFJMmNScW0vYWh0Myt0dE5tdzg0OSswbkFBU3EvVEd3Y0QvTnNQcnRiXG5ZSEhSVlRIYjJ5WXUzdDlRVU9UVHhjdjVMcDkwaHdISFpzR2c5TmNmOGlWM21pTzRnaVdhWHRza01mbXNyZDVnXG4wQ2RjWGd5TkhtYTFNenFRRFhnb0ZMRlFic2VBRkZLYVdJOStpcUZZeG83WDdDSkdJN2o5azcva0ZJQWRPamQxXG5BN2R5K1ZpdkFnTUJBQUVDZ2dFQUM2Z0E2K2tKbUFhMVdzVk5mRW40ZkxUZGNBMXAwNWt5d1B3TGJlNVd5L3NTXG45SjJnV2ZPdnZmM2d5eWdTMEVhVW9QcnZzMFNyUENQRUJVb0o3Z2s2RmlYT0NjZlRvdEJibGsrMkFWK08wbkJLXG5vMUgvUWwyeSsvd2IyZFl5RDVtMDl6SmxKdUVndTZhZHUvN1hKdG92ZlltT2RLLzBYZzRxN3dTZW9aQTVLcEZKXG5rdjNuK0RNbUZBTUpRTHNmOVN2YUJrbHpvempubnpuMWRDN0UzZmZHNDc3aDlvWmUrdmRCK29hQTB4Yzh1a1R5XG5EZDBMNlNRSUkrSlRWa2dtNkEyNWQ4N1pVYXd0QTcxc1FzRFlsRExjdGR4emc1UEZPZHlzZ3NzRnh6OHpGOS9wXG5mMXU5enRSOXdHT0FOcHBSU2ZLQUx2clFVNHUyZDhBR2pLcEV5TEdLNFFLQmdRQzlQQVRCVzJXZzduMFhWaU5DXG5tdHg0YVROYk1HamdtTW1DZjFnaW81RURnV295MWN1cGF0Sm5oQWNpQ3VNdE8rTE5qVXBXNy82MG9ERWlYTGJDXG4rVHpUT1JzaW1vMDJHZ1BiN3lQM2k2SXBNNWtZZHBxSUtLVHNhVXlDZ3BzQW91Vk9tblk4TjY0UVI2V2JHZWdOXG5Qd0VhWnZGLzFVODAyVGZUQ3R6YTUyMS9vd0tCZ1FDMmxqV2hWa2tpT2FEQk9vR3kwdFY5bDUwN0Mwbno0Z3B6XG5CTHFsempaTlQ5NGw4UWdiUGE1ajV2aVdVY3dXYldUZUtkNTJXaCtCMk5YYVh1L092SWRKenJTK2ZBSFF5S1lIXG5nSFUzdW9HWFZNT3BFSDZidHh1TVQrWmUwMlE1bTd4dWwvc085RUkzZU90ZmVZT2lmbzBWa09QR01WTUxFRld4XG5GOHY1aWY1amhRS0JnR2N3U0VPTDdFSXlha0lFZFp2SFNIdmNtZVdhNDBXOTZ2eGZKcGRVN0NtbU0xdmZHM3laXG54SHd3RVpldHFpMnJYMFRKVEFWV1AyVU5pVjE4Z3lpVXNtZFgxNFVxRStDeGxQTWtWMCtRYysvVnRDRVQ0N1psXG51M0V6QmthUW82ZFlMSVNOVS9ZSVFzR2I0Q0ZRb2lvKzlnSUlxcDRUbW1wdUhMUFhVNUdHNnozVEFvR0FNU1BBXG5EMG5QcVB4bGZWdW5xRjhCd2lsWjBaZzZNUDcyM1BtNjJnRGpzRzc4VkszSUJyelZBR0liS1NtZWliS3JZUGRYXG52ZmFIWUVUaFdVSVB2RTRWQXhJMHBzZHRIYW5DdFdZbkpmWjJCaXB6OWo1UU5NeFZCN0JCU2VnT28wcDhyaThOXG5ESHRFanZWbU0yM2F0WkxsbVpaREZ3WVRXWGp0OXhsMmRoUmplSmtDZ1lCdTB5RHNld0VubEdxSCt3M1RJV3pIXG5TVmVtbnM5SG1sbk55VFdCbnlwaFoxMkFnVFV3TDB1WFlDdG5rd3pmNHd2SHlXWk1aY25xM0MzcjNWY2FrVXYrXG5hZmdjZ2tDcGl0Z1h4aDNOdjhvQm82elNjVUtWYXQ2dUxJNGtXL3lyRTdHVWNYeTEzRlZZeHZ6Y3hkYnpvYVM2XG5XaWQ3MlBkck85dG4rSkFNVlJEVWpBPT1cbi0tLS0tRU5EIFBSSVZBVEUgS0VZLS0tLS1cbiIsCiAgImNsaWVudF9lbWFpbCI6ICJmaXJlYmFzZS1hZG1pbnNkay1mYnN2Y0BzbWFydC1kZWFscy0xNDdjMi5pYW0uZ3NlcnZpY2VhY2NvdW50LmNvbSIsCiAgImNsaWVudF9pZCI6ICIxMTc0NTk3NTk1MDc4MzY2NDI1OTUiLAogICJhdXRoX3VyaSI6ICJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20vby9vYXV0aDIvYXV0aCIsCiAgInRva2VuX3VyaSI6ICJodHRwczovL29hdXRoMi5nb29nbGVhcGlzLmNvbS90b2tlbiIsCiAgImF1dGhfcHJvdmlkZXJfeDUwOV9jZXJ0X3VybCI6ICJodHRwczovL3d3dy5nb29nbGVhcGlzLmNvbS9vYXV0aDIvdjEvY2VydHMiLAogICJjbGllbnRfeDUwOV9jZXJ0X3VybCI6ICJodHRwczovL3d3dy5nb29nbGVhcGlzLmNvbS9yb2JvdC92MS9tZXRhZGF0YS94NTA5L2ZpcmViYXNlLWFkbWluc2RrLWZic3ZjJTQwc21hcnQtZGVhbHMtMTQ3YzIuaWFtLmdzZXJ2aWNlYWNjb3VudC5jb20iLAogICJ1bml2ZXJzZV9kb21haW4iOiAiZ29vZ2xlYXBpcy5jb20iCn0K
+
+STRIPE_SECRET_KEY=sk_test_51SWYftPIUYhsNQFQaJOnU75b3zhrAtYvqcUaM32iqDxDnCmSHXoKfzEBFETAVXD7PalZKcGODjOZeFinm8Ak5NOv00NcAwMH3e
+CLIENT_DOMAIN=http://localhost:5173  const fs = require('fs');
+const key = fs.readFileSync('./smart-deals-147c2-firebase-adminsdk-fbsvc-7d910eeeb9.json', 'utf8')
+const base64 = Buffer.from(key).toString('base64')
+console.log(base64)  node_modules
+.env
+smart-deals-147c2-firebase-adminsdk-fbsvc-7d910eeeb9.json  amar basic kisu reke tumi project onujayi index.js create kore . then akta structure onujayi frontend koro ami tomoke  kisu data dissi .... import { StrictMode } from 'react'
+import { createRoot } from 'react-dom/client'
+import './index.css'
+import App from './App.jsx'
+import { RouterProvider } from 'react-router'
+import { router } from './Routes/Router.jsx'
+import AuthProvider from './Contexts/AuthProvider.jsx'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { Toaster } from 'react-hot-toast'
+
+// Create a client
+const queryClient = new QueryClient()
+
+createRoot(document.getElementById('root')).render(
+  <StrictMode>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+      <RouterProvider router={router}>
+
+    </RouterProvider>
+    </AuthProvider>
+    <Toaster position="top-right" reverseOrder={false}></Toaster>
+    </QueryClientProvider>
+  </StrictMode>, import { createBrowserRouter } from "react-router";
+import MainLayout from "../Layouts/MainLayout";
+import Home from "../Pages/Home/Home";
+import AuthLayout from "../Layouts/AuthLayout";
+import Login from "../Pages/Auth/Login";
+import Register from "../Pages/Auth/Register";
+import ErrorPages from "../LoaderPage/ErrorPages";
+import PrivateRoute from "./PrivateRoute";
+
+import DashboardLayout from "../Layouts/DashboardLayout";
+
+import MyBookedTickets from "../Pages/Dashboard/User/MyBookedTickets";
+
+import AddTicket from "../Pages/Dashboard/Vendor/AddTicket";
+
+import TicketDetails from "../Components/Tickets/TicketDetails";
+import AllTickets from "../Pages/Home/AllTickets";
+import PaymentSuccess from "../Components/Payment/PaymentSuccess";
+import RequestedBookings from "../Pages/Dashboard/Vendor/RequestedBookings";
+import ManageTickets from "../Pages/Dashboard/Admin/ManageTickets";
+import Profile from "../Pages/Dashboard/Profile/Profile";
+import VendorProfile from "../Components/AllProfile/VendorProfile";
+import AdminProfile from "../Components/AllProfile/AdminProfile";
+import UserProfile from "../Components/AllProfile/UserProfile";
+import BecomeVendor from "../Pages/Dashboard/User/BecomeVendor";
+
+
+
+export const router = createBrowserRouter([
+    //MainLayout
+    {
+        path: ("/"),
+        element: <MainLayout></MainLayout>,
+        errorElement: <ErrorPages></ErrorPages>,
+        children: [
+            {
+                index: true,
+                element: <Home></Home>,
+            },
+            {
+                path: 'all-tickets',
+                element: <AllTickets></AllTickets>,
+            },
+            {
+                path: 'ticket/:id',
+                element: <TicketDetails></TicketDetails>,
+            },
+            {
+                path: 'payment-success',
+                element: <PaymentSuccess></PaymentSuccess>,
+            },
+        ]
+    },
+
+    // AuthLayout
+    {
+        path: '/auth',
+        element: <AuthLayout></AuthLayout>,
+        children: [
+            {
+                path: 'login',
+                element: <Login></Login>
+            },
+            {
+                path: 'register',
+                element: <Register></Register>
+            },
+        ]
+    },
+
+    //DashboardLayout
+    {
+        path: '/dashboard',
+        element:
+            (<PrivateRoute>
+                <DashboardLayout></DashboardLayout>
+            </PrivateRoute>),
+
+        children: [
+            {
+                index: true,
+                element: <Profile></Profile>
+               
+            },
+
+            //sigle role profile
+            {
+                path: "user-profile",
+                element: <UserProfile></UserProfile>,
+            },
+            {
+                path: "vendor-profile",
+                element: <VendorProfile></VendorProfile>
+            },
+            {
+                path: "admin-profile",
+                element: <AdminProfile></AdminProfile>
+            },
+
+            // User/customer pages
+            { path: "my-bookings", element: <MyBookedTickets /> },
+            { path: "become-vendor", element: <BecomeVendor></BecomeVendor> },
+            // { path: "transactions", element: <TransactionHistory /> },
+
+            // Vendor pages
+            { path: "add-ticket", element: <AddTicket /> },
+            // { path: "my-tickets", element: <MyAddedTickets /> },
+            {
+                path: "requested-bookings",
+                element: <RequestedBookings></RequestedBookings>
+            },
+            // { path: "revenue-overview", element: <RevenueOverview /> },
+
+            // Admin pages
+            {
+                path: "manage-tickets",
+                element: <ManageTickets></ManageTickets>,
+            },
+            // { path: "manage-users", element: <ManageUsers /> },
+            // { path: "advertise", element: <AdvertiseTickets /> },
+        ]
+    }
+])  
+)import React from 'react';
+import useAuth from '../Hooks/useAuth';
+import { Navigate, useLocation } from 'react-router';
+
+const PrivateRoute = ({children}) => {
+    const {user, loading} = useAuth();
+    const location = useLocation();
+    // console.log('location', location);
+
+    if(loading){
+        return <div>
+            <span className="loading loading-spinner text-warning"></span>
+        </div>
+    }
+    if(!user){
+        return <Navigate state={location.pathname} to='/auth/login'></Navigate>
+    }
+
+    return children;
+};
+
+export default PrivateRoute; const Container = ({ children }) => {
+  return (
+    <div className='max-w-screen-2xl mx-auto xl:px-20 md:px-10 sm:px-2 px-4'>
+      {children}
+    </div>
+  )
+}
+
+export default Container; import React, { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import useAuth from '../../Hooks/useAuth';
+import { Link, useLocation, useNavigate } from 'react-router';
+import GoogleLogin from './GoogleLogin';
+import axios from 'axios';
+import { AiFillEye, AiFillEyeInvisible } from 'react-icons/ai';
+import toast from 'react-hot-toast';
+import { saveOrUpdateUser } from '../../Utils';
+
+const Register = () => {
+    const { register, handleSubmit, formState: { errors } } = useForm();
+    // console.log(errors);
+    const { registerUser, updateUserProfile } = useAuth();
+    const navigate = useNavigate();
+    const location = useLocation();
+    // console.log('in the register page', location);
+
+    const [showPassword, setShowPassword] = useState(false);
+
+
+        const handleRegistration = async (data) => {
+      try {
+        const result = await registerUser(data.email, data.password);
+        console.log(result.user);
+
+        const profileImg = data.photo[0];
+
+        const formData = new FormData();
+        formData.append('image', profileImg);
+
+        const image_API_URL = `https://api.imgbb.com/1/upload?key=${import.meta.env.VITE_IMGBB_API_KEY}`;
+        const res = await axios.post(image_API_URL, formData);
+
+        const imageURL = res.data.data.url;
+
+        // saveOrUpdateUser
+        await saveOrUpdateUser({
+      name: data.name,
+      email: data.email,
+      image: imageURL
+    });
+
+
+        await updateUserProfile({
+          displayName: data.name,
+          photoURL: imageURL
+        });
+
+        toast.success('Registration Successful !!');
+        navigate(location?.state || '/');
+
+      } catch (error) {
+        console.log(error);
+        toast.error('Registration Failed !!');
+      }
+    };
+
+  
+    return (
+        <div className="min-h-screen flex items-center justify-center bg-gray-100">
+
+
+            <div className="w-full bg-white shadow-xl grid grid-cols-1 md:grid-cols-2">
+
+
+                <div className="hidden md:flex items-center justify-center p-6 bg-gray-200">
+                    <h3 className="text-3xl font-semibold text-center">Create Account</h3>
+                </div>
+
+
+                <div className="p-8 flex flex-col justify-center items-center h-full">
+                    <h2 className="text-3xl font-semibold text-center">Welcome To Ticket Bari</h2>
+                    <p className="text-xl font-semibold text-center mb-6">Please Register</p>
+
+
+                    <form onSubmit={handleSubmit(handleRegistration)} className="w-full max-w-lg">
+                        <fieldset className="fieldset">
+
+                            {/* name */}
+                            <label className="label">Name</label>
+                            <input
+                                name='name'
+                                type="text"
+                                {...register("name", { required: true, minLength: 5 })}
+                                className="input w-full"
+                                placeholder="Your Name"
+                                id='name'
+                            />
+                            {errors.name?.type === "required" &&
+                                <p className="text-red-700">Name is required</p>
+                            }
+                            {errors.name?.type === "minLength" &&
+                                <p className="text-red-600">At least 5 characters required</p>
+                            }
+
+                            {/* photo */}
+                            <label className="label">Photo</label>
+                            <input
+                                name='photo'
+                                type="file"
+                                {...register("photo", { required: true })}
+                                className="file-input w-full"
+                                placeholder="Your Photo"
+                                id='photo'
+                            />
+                            {errors.photo?.type === "required" &&
+                                <p className="text-red-700">Photo is required</p>
+                            }
+
+                            {/* Email */}
+                            <label className="label">Email</label>
+                            <input
+                                name='email'
+                                type="email"
+                                {...register("email", { required: true })}
+                                className="input w-full"
+                                id='email'
+                                placeholder="Email"
+                            />
+                            {errors.email?.type === "required" &&
+                                <p className="text-red-700">Email is required</p>
+                            }
+
+                            {/* Password */}
+                            <label className="label mt-3">Password</label>
+                            {/* <input
+                                type="password"
+                                {...register("password", {
+                                    required: true,
+                                    minLength: 8,
+                                    pattern: /^(?=.*[a-z])(?=.*[A-Z]).{6,}$/
+                                })}
+                                className="input w-full"
+                                placeholder="Password"
+                            /> */}
+                            <div className='relative'>
+                                <input
+
+                                    // type="password"
+                                    type={showPassword ? "text" : "password"}
+                                    {...register("password", {
+                                        required: true,
+                                        minLength: 8,
+                                        // pattern: /^(?=.*[a-z])(?=.*[A-Z]).{6,}$/
+                                        pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/
+
+                                    })}
+                                    name='password'
+                                    id='password'
+                                    className="input w-full"
+                                    placeholder="Password"
+                                />
+                                <span
+                                    className="absolute right-2 top-2.5 cursor-pointer text-gray-600"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                >
+                                    {showPassword ? <AiFillEyeInvisible size={20} /> : <AiFillEye size={20} />}
+                                </span>
+                            </div>
+
+                            {errors.password?.type === "required" &&
+                                <p className="text-red-600">Password is Required</p>
+                            }
+                            {errors.password?.type === "minLength" &&
+                                <p className="text-red-600">At least 8 characters required</p>
+                            }
+                            {errors.password?.type === "pattern" &&
+                                <p className="text-red-600">Must include uppercase, lowercase, number & special character</p>
+                            }
+
+                            <div className="mt-2">
+                                <a className="link link-hover">Forgot password?</a>
+                            </div>
+
+                            <button type="submit" className="btn btn-neutral mt-4 w-full">
+                                Register
+                            </button>
+
+                        </fieldset>
+                        <p className='text-sm font-bold mt-4'>ALready Have An Account ? - Ticket Bari. <Link state={location.state} to='/auth/login' className='text-blue-800 hover:text-green-500'>Login Now</Link></p>
+                    </form>
+                    <GoogleLogin></GoogleLogin>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+export default Register; import React, { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import useAuth from '../../Hooks/useAuth';
+import { Link, useLocation, useNavigate } from 'react-router';
+import GoogleLogin from './GoogleLogin';
+import { AiFillEye, AiFillEyeInvisible } from 'react-icons/ai';
+import toast from 'react-hot-toast';
+import { saveOrUpdateUser } from '../../Utils';
+
+const Login = () => {
+    const { register, handleSubmit, formState: { errors } } = useForm();
+    const { signInUser } = useAuth();
+    const navigate = useNavigate();
+    const location = useLocation();
+    console.log('in the login page', location);
+
+    const [showPassword, setShowPassword] = useState(false);
+
+
+ const handleLogin = async (data) => {
+  try {
+    const result = await signInUser(data.email, data.password);
+    const user = result.user;
+
+    // save user to DB
+    await saveOrUpdateUser({
+      name: user.displayName || "N/A",
+      email: user.email,
+      image: user.photoURL || "",
+      role: "user",
+    });
+
+    toast.success("Login successful !!");
+    navigate(location?.state || "/");
+  } catch (error) {
+    console.log(error);
+    toast.error("Invalid email or password !!");
+  }
+};
+
+
+    return (
+        <div className="min-h-screen flex items-center justify-center bg-gray-100">
+
+
+            <div className="w-full bg-white shadow-xl grid grid-cols-1 md:grid-cols-2">
+
+
+                <div className="hidden md:flex items-center justify-center p-6 bg-gray-200">
+                    <h3 className="text-3xl font-semibold text-center">Welcome Back</h3>
+                </div>
+
+
+                <div className="p-8 flex flex-col justify-center items-center h-full">
+                    <h2 className="text-3xl font-semibold text-center">Welcome To Ticket Bari</h2>
+                    <p className="text-xl font-semibold text-center mb-6">Please Login...</p>
+
+                    <form onSubmit={handleSubmit(handleLogin)} className="w-full max-w-lg">
+                        <fieldset className="fieldset">
+
+                            <label className="label">Email</label>
+                            <input
+                                name='email'
+                                type="email"
+                                {...register("email", { required: true })}
+                                className="input w-full"
+                                placeholder="Email"
+                                id='email'
+                            />
+                            {errors.email?.type === "required" &&
+                                <p className="text-red-700">Email is required</p>
+                            }
+
+                            <label className="label mt-3">Password</label>
+                            <div className='relative'>
+                                <input
+                                    // type="password"
+                                    type={showPassword ? "text" : "password"}
+                                    {...register("password", {
+                                        required: true,
+                                        minLength: 8,
+                                        // pattern: /^(?=.*[a-z])(?=.*[A-Z]).{6,}$/
+                                        pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/
+
+                                    })}
+                                    name='password'
+                                    className="input w-full"
+                                    placeholder="Password"
+                                    id='password'
+                                />
+                                <span
+                                    className="absolute right-2 top-2.5 cursor-pointer text-gray-600"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                >
+                                    {showPassword ? <AiFillEyeInvisible size={20} /> : <AiFillEye size={20} />}
+                                </span>
+                            </div>
+
+                            {errors.password?.type === "required" &&
+                                <p className="text-red-600">Password is Required</p>
+                            }
+                            {errors.password?.type === "minLength" &&
+                                <p className="text-red-600">Password must be at least 8 characters</p>
+                            }
+                            {errors.password?.type === "pattern" &&
+                                <p className="text-red-600">Must include uppercase, lowercase, number & special character</p>
+                            }
+
+                            <div className="mt-2">
+                                <a className="link link-hover">Forgot password?</a>
+                            </div>
+
+                            <button type="submit" className="btn btn-neutral mt-4 w-full">
+                                Login
+                            </button>
+
+                        </fieldset>
+                        <p className='text-sm font-bold mt-4'>Don't Have An Account ? - Ticket Bari. <Link state={location.state} to='/auth/register' className='text-blue-800 hover:text-green-500'>Please Register</Link></p>
+                    </form>
+                    <GoogleLogin></GoogleLogin>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+export default Login;
+ import React from 'react';
+import useAuth from '../../Hooks/useAuth';
+import { useLocation, useNavigate } from 'react-router';
+import toast from 'react-hot-toast';
+import { saveOrUpdateUser } from '../../Utils';
+
+const GoogleLogin = () => {
+    const {signInGoogle} = useAuth();
+    const navigate = useNavigate();
+    const location = useLocation();
+    //  console.log('in the Google login page', location);
+
+ const handleGoogleSignIn = async () => {
+    try {
+      const result = await signInGoogle();
+      const user = result.user;
+
+      // save user to DB
+      await saveOrUpdateUser({
+        name: user.displayName,
+        email: user.email,
+        image: user.photoURL,
+        role: "user",
+      });
+
+      toast.success("Logged in with Google Successfully!");
+      navigate(location?.state || "/");
+    } catch (error) {
+      console.log(error);
+      toast.error("Google login failed");
+    }
+  };
+    return (
+        <div>
+            <p className='text-3xl font-bold underline m-2'>OR</p>
+            {/* Google */}
+            <button onClick={handleGoogleSignIn}
+            className="btn bg-white text-black border-[#e5e5e5]">
+                <svg aria-label="Google logo" width="16" height="16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><g><path d="m0 0H512V512H0" fill="#fff"></path><path fill="#34a853" d="M153 292c30 82 118 95 171 60h62v48A192 192 0 0190 341"></path><path fill="#4285f4" d="m386 400a140 175 0 0053-179H260v74h102q-7 37-38 57"></path><path fill="#fbbc02" d="m90 341a208 200 0 010-171l63 49q-12 37 0 73"></path><path fill="#ea4335" d="m153 219c22-69 116-109 179-50l55-54c-78-75-230-72-297 55"></path></g></svg>
+                Login with Google
+            </button>
+        </div>
+    );
+};
+
+export default GoogleLogin; import { ScaleLoader } from 'react-spinners'
+
+const LoadingSpinner = ({ smallHeight }) => {
+  return (
+    <div
+      className={` ${smallHeight ? 'h-[250px]' : 'h-[70vh]'}
+      flex 
+      flex-col 
+      justify-center 
+      items-center `}
+    >
+      <ScaleLoader size={100} color='lime' />
+    </div>
+  )
+}
+
+export default LoadingSpinner import React from 'react';
+import { Link } from 'react-router';
+
+const ErrorPages = () => {
+    return (
+        <div className="min-h-screen flex flex-col items-center justify-center bg-base-200 text-center px-4">
+      <h1 className="text-7xl font-bold text-error mb-4">404</h1>
+      <h2 className="text-2xl font-semibold mb-2">Page Not Found</h2>
+      <p className="mb-6 text-gray-500 max-w-md">
+        The page you are looking for does not exist or has been moved.
+      </p>
+
+      <Link to="/" className="btn btn-primary">
+        Back to Home
+      </Link>
+    </div>
+    );
+};
+
+export default ErrorPages; import React from 'react';
+import { Outlet } from 'react-router';
+import Navbar from '../Components/Header/Navbar';
+import Footer from '../Components/Footer/Footer';
+
+const MainLayout = () => {
+    return (
+        <div className='max-w-7xl mx-auto'>
+            <Navbar></Navbar>
+            <div className='pt-24 min-h-[calc(100vh-68px)]'>
+                <Outlet></Outlet>
+            </div>
+            <Footer></Footer>
+        </div>
+    );
+};
+
+export default MainLayout; import React from "react";
+import useAuth from "../Hooks/useAuth";
+import Sidebar from "../Pages/Dashboard/Sidebar/Sidebar";
+import { Outlet } from "react-router";
+import Navbar from "../Components/Header/Navbar";
+
+
+const DashboardLayout = () => {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="w-full h-screen flex items-center justify-center">
+        <span className="loading loading-spinner loading-lg"></span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-7xl mx-auto">
+      <Navbar></Navbar>
+      <div className="flex min-h-screen">
+      {/* sidebar */}
+      <Sidebar />
+
+      {/* main content */}
+      <div className="flex-1 bg-gray-100 p-6">
+        <Outlet />
+      </div>
+    </div>
+    </div>
+  );
+};
+
+export default DashboardLayout;
+import React from 'react';
+// import showAuthImg from '../assets/showauthimg.png'
+import { Outlet } from 'react-router';
+import Navbar from '../Components/Header/Navbar';
+
+const AuthLayout = () => {
+    return (
+        <div className="w-full">
+
+            <Navbar />
+
+            <div className="flex w-full">
+                {/* <div className="flex-1">
+                    <img src={showAuthImg} alt="" className="w-full h-full object-cover" />
+                </div> */}
+                <div className="flex-1">
+                    <Outlet />
+                </div>
+            </div>
+        </div>
+    );
+};
+
+export default AuthLayout;
+ // import React, { use } from 'react';
+// import { AuthContext } from '../contexts/AuthContext';
+
+
+// const useAuth = () => {
+//     const authInfo = use(AuthContext);
+
+//     return authInfo;
+// };
+
+// export default useAuth;
+
+import { useContext } from "react";
+import { AuthContext } from "../contexts/AuthContext";
+
+const useAuth = () => {
+  const authInfo = useContext(AuthContext);
+  return authInfo;
+};
+
+export default useAuth; import { useEffect } from 'react'
+import { useNavigate } from 'react-router'
+import axios from 'axios'
+import useAuth from './useAuth'
+
+const axiosInstance = axios.create({
+  baseURL: import.meta.env.VITE_API_URL,
+  withCredentials: true,
+})
+
+const useAxiosSecure = () => {
+  const { user, logOut, loading } = useAuth()
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    if (!loading && user?.accessToken) {
+      // Add request interceptor
+      const requestInterceptor = axiosInstance.interceptors.request.use(
+        config => {
+          config.headers.Authorization = `Bearer ${user.accessToken}`
+          return config
+        }
+      )
+
+      // Add response interceptor
+      const responseInterceptor = axiosInstance.interceptors.response.use(
+        res => res,
+        err => {
+          if (err?.response?.status === 401 || err?.response?.status === 403) {
+            logOut()
+              .then(() => {
+                console.log('Logged out successfully.')
+              })
+              .catch(console.error)
+            navigate('/login')
+          }
+          return Promise.reject(err)
+        }
+      )
+
+      // Cleanup to prevent multiple interceptors on re-renders
+      return () => {
+        axiosInstance.interceptors.request.eject(requestInterceptor)
+        axiosInstance.interceptors.response.eject(responseInterceptor)
+      }
+    }
+  }, [user, loading, logOut, navigate])
+
+  return axiosInstance
+}
+export default useAxiosSecureimport useAuth from './useAuth'
+import useAxiosSecure from './useAxiosSecure'
+import { useQuery } from '@tanstack/react-query'
+
+const useRole = () => {
+  const { user, loading } = useAuth()
+  const axiosSecure = useAxiosSecure()
+
+  const { data: role, isLoading: isRoleLoading } = useQuery({
+    enabled: !loading && !!user?.email,
+    queryKey: ['role', user?.email],
+    queryFn: async () => {
+      const result = await axiosSecure(`/user/role`)
+      console.log(result)
+      return result.data.role
+    },
+  })
+
+  //   return { role, isRoleLoading }
+  return [role, isRoleLoading]
+}
+
+export default useRole
+
+ // Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+import { getAuth } from "firebase/auth";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+const firebaseConfig = {
+apiKey:import.meta.env.VITE_apiKey,
+authDomain:import.meta.env.VITE_authDomain,
+projectId:import.meta.env.VITE_projectId,
+storageBucket:import.meta.env.VITE_storageBucket,
+messagingSenderId:import.meta.env.VITE_messagingSenderId,
+appId:import.meta.env.VITE_appId,
+
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+
+// Initialize Firebase Authentication and get a reference to the service
+export const auth = getAuth(app); import React, { useEffect, useState } from 'react';
+import { createUserWithEmailAndPassword, GoogleAuthProvider, onAuthStateChanged, signInWithEmailAndPassword, signInWithPopup, signOut, updateProfile } from 'firebase/auth';
+import { auth } from '../Firebase/firebase.init';
+import { AuthContext } from './AuthContext';
+// import { AuthContext } from './AuthContext';
+
+const googleProvider = new GoogleAuthProvider();
+
+const AuthProvider = ({ children }) => {
+    const [user, setUser] = useState(null);
+    const [loading, setLoading] = useState(true);
+
+    const registerUser = (email, password) => {
+        setLoading(true);
+        return createUserWithEmailAndPassword(auth, email, password)
+    }
+    const signInUser = (email, password) => {
+        setLoading(true);
+        return signInWithEmailAndPassword(auth, email, password)
+    }
+    const signInGoogle = () => {
+        setLoading(true);
+        return signInWithPopup(auth, googleProvider);
+    }
+
+    const logOut = ()=>{
+        setLoading(true);
+        return signOut(auth);
+    }
+
+    const updateUserProfile = (profile)=>{
+        return updateProfile(auth.currentUser, profile)
+    }
+
+    useEffect(()=>{
+        const unsubscribe = onAuthStateChanged(auth,(currentUser)=>{
+            setUser(currentUser);
+            setLoading(false);
+        })
+        return()=>{
+            unsubscribe();
+        }
+    },[])
+
+    const authInfo = {
+        user,
+        setUser,
+        loading,
+        setLoading,
+        registerUser,
+        signInUser,
+        signInGoogle,
+        logOut,
+        updateUserProfile,
+    }
+
+    // return (
+    //     <AuthContext value={authInfo}>
+    //         {children}
+    //     </AuthContext>
+    // );
+
+    return (
+  <AuthContext.Provider value={authInfo}>
+    {children}
+  </AuthContext.Provider>
+);
+};
+
+export default AuthProvider; import { createContext } from "react";
+
+export const AuthContext = createContext(null);  import React from 'react';
+import { MdEmojiTransportation } from 'react-icons/md';
+import { Link, NavLink, useLocation, useNavigate } from 'react-router';
+import useAuth from '../../Hooks/useAuth';
+import toast from 'react-hot-toast';
+
+const Navbar = () => {
+  const {user, logOut} = useAuth();
+   const navigate = useNavigate();
+    // const location = useLocation();
+    // console.log('after logout', location);
+
+  const handleLogOut=()=>{
+    logOut()
+    .then(result=>{
+      toast.success("LogOut successful !!");
+      console.log(result.user)
+      //  navigate(location?.state || '/');
+      navigate('/');
+    })
+    .catch(error=>{
+      console.log(error)
+    })
+  }
+
+    const links = (
+    <>
+    {/* <NavLink to="/" className={({ isActive }) => isActive ? "font-bold active" : "font-bold"}>Home</NavLink>
+    <NavLink to="/all-tickets" className={({ isActive }) => isActive ? "font-bold active" : "font-bold"}>All Tickets</NavLink>
+    <NavLink to="/dashboard" className={({ isActive }) => isActive ? "font-bold active" : "font-bold"}>Dashboard</NavLink> */}
+
+      <li><NavLink to='/' className="font-bold">Home</NavLink></li>
+      <li><NavLink to='/all-tickets' className="font-bold">All Tickets</NavLink></li>
+      <li><NavLink to='/dashboard' className="font-bold">Dashboard</NavLink></li>
+     
+    </>
+  )
+
+    return (
+        <div className="navbar bg-base-100 shadow-sm">
+  <div className="navbar-start">
+    <div className="dropdown">
+      <div tabIndex={0} role="button" className="btn btn-ghost lg:hidden">
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"> <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h8m-8 6h16" /> </svg>
+      </div>
+      <ul
+        tabIndex="-1"
+        className="menu menu-sm dropdown-content bg-base-100 rounded-box z-1 mt-3 w-52 p-2 shadow">
+        {links}
+      </ul>
+    </div>
+    <a className="btn btn-ghost text-xl"><MdEmojiTransportation />Ticket Bari</a>
+  </div>
+  <div className="navbar-center hidden lg:flex">
+    <ul className="menu menu-horizontal px-1">
+      {links}
+    </ul>
+  </div>
+  <div className="navbar-end flex items-center gap-2">
+    {/* <a className="btn">Login</a> */}
+    {
+      user? <>
+      {user.photoURL && (
+        <img 
+          src={user.photoURL} 
+          alt="User Profile" 
+          className="w-8 h-8 rounded-full border border-gray-700"
+        />
+      )} <a onClick={handleLogOut} className="btn">Logout</a></>
+       :  <Link to='/auth/login' className="btn">Login</Link>
+    }
+  </div>
+</div>
+    );
+};
+
+export default Navbar;

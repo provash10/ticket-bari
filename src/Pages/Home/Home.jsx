@@ -1,5 +1,5 @@
 import React from 'react';
-import Tickets from '../../Components/Tickets/Tickets';
+import Banner from '../../Components/HomeItem/Banner';
 
 
 
@@ -8,6 +8,7 @@ const Home = () => {
     return (
         <div>
             <h3>Home Page</h3>
+            <Banner></Banner>
         </div>
     );
 };
