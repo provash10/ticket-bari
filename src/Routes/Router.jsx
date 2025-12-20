@@ -21,6 +21,8 @@ import BecomeVendor from "../Pages/Dashboard/User/BecomeVendor";
 import MyBookedTickets from "../Pages/Dashboard/User/MyBookedTickets";
 import TransactionHistory from "../Pages/Dashboard/User/TransactionHistory";
 import ApprovedVendors from "../Pages/Dashboard/ApprovedVendors/ApprovedVendors";
+import UsersManagement from "../Pages/Dashboard/UsersManagement/UsersManagement";
+import AdminRoute from "./AdminRoute";
 // import Payment from "../Pages/Dashboard/OnlinePayment/Payment";
 
 
@@ -120,6 +122,12 @@ export const router = createBrowserRouter([
             },
             // { path: "manage-users", element: <ManageUsers /> },
             // { path: "advertise", element: <AdvertiseTickets /> },
+            {
+                path:'users-management',
+                element: <AdminRoute>
+                    <UsersManagement></UsersManagement>,
+                </AdminRoute>,
+            },
         ]
     }
 ])

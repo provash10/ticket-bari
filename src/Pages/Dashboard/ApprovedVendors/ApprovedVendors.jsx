@@ -1,7 +1,7 @@
 import React from 'react';
 import useAxiosSecure from '../../../Hooks/useAxiosSecure';
 import { useQuery } from '@tanstack/react-query';
-import { FaUserCheck } from 'react-icons/fa';
+import { FaEye, FaUserCheck } from 'react-icons/fa';
 import { MdDeleteForever, MdPersonRemoveAlt1 } from 'react-icons/md';
 import Swal from 'sweetalert2';
 
@@ -74,6 +74,9 @@ const ApprovedVendors = () => {
                                         'text-green-800' : 'text-red-500'}`}>{vendor.status}</p>
                                 </td>
                                 <td>
+                                    <button  className='btn'>
+                                        <FaEye />
+                                    </button>
                                     <button onClick={() => handleApproval(vendor)} className='btn'>
                                         <FaUserCheck />
                                     </button>
