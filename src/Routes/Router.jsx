@@ -20,6 +20,7 @@ import Profile from "../Pages/Dashboard/Profile/Profile";
 import BecomeVendor from "../Pages/Dashboard/User/BecomeVendor";
 import MyBookedTickets from "../Pages/Dashboard/User/MyBookedTickets";
 import TransactionHistory from "../Pages/Dashboard/User/TransactionHistory";
+import ApprovedVendors from "../Pages/Dashboard/ApprovedVendors/ApprovedVendors";
 // import Payment from "../Pages/Dashboard/OnlinePayment/Payment";
 
 
@@ -80,10 +81,10 @@ export const router = createBrowserRouter([
                 element: <Profile></Profile>  
             },
 
-            // {
-            //     path:'payment/:bookingId',
-            //     element: <Payment></Payment>,
-            // },
+            {
+                path: 'approved-vendors',
+                element: <ApprovedVendors></ApprovedVendors>,
+            },
 
             // User/customer pages
             { 

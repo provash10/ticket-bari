@@ -3,6 +3,7 @@ import useAuth from "../Hooks/useAuth";
 import Sidebar from "../Pages/Dashboard/Sidebar/Sidebar";
 import { Outlet } from "react-router";
 import Navbar from "../Components/Header/Navbar";
+import ApprovedVendors from "../Pages/Dashboard/ApprovedVendors/ApprovedVendors";
 
 
 const DashboardLayout = () => {
@@ -19,7 +20,8 @@ const DashboardLayout = () => {
   return (
     <div className="max-w-7xl mx-auto">
       <Navbar></Navbar>
-      <div className="flex min-h-screen">
+      
+       <div className="flex min-h-screen">
       {/* sidebar */}
       <Sidebar />
 
@@ -27,7 +29,7 @@ const DashboardLayout = () => {
       <div className="flex-1 bg-gray-100 p-6">
         <Outlet />
       </div>
-    </div>
+      </div>
     </div>
   );
 };
