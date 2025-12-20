@@ -27,7 +27,7 @@ const Tickets = () => {
           ))}
         </div>
       ) : (
-        <p className="text-center text-gray-500">No tickets available</p>
+        <p className="text-center text-gray-500">No tickets available.</p>
       )}
     </Container>
   );
