@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { MdEmojiTransportation } from 'react-icons/md';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router';
 import useAuth from '../../Hooks/useAuth';
@@ -39,6 +39,21 @@ const Navbar = () => {
     </>
   )
 
+  const [theme, setTheme] = useState(localStorage.getItem('theme') || "light")
+
+  useEffect(() => {
+    const html = document.querySelector('html')
+     html.setAttribute("data-theme", theme)
+     localStorage.setItem("theme", theme)
+  }, [theme])
+
+
+  const handleTheme = (checked) => {
+    console.log(checked);
+   setTheme(checked? "dark" : "light")
+  }
+
+
     return (
         <div className="navbar bg-base-100 shadow-sm">
   <div className="navbar-start">
@@ -60,6 +75,12 @@ const Navbar = () => {
     </ul>
   </div>
   <div className="navbar-end flex items-center gap-2">
+    {/* dark-light */}
+             <input
+           onChange={(e)=> handleTheme(e.target.checked)}
+           type="checkbox"
+           defaultChecked={localStorage.getItem('theme') === "dark"}
+           className="toggle"/>
     {/* <a className="btn">Login</a> */}
     {
       user? <>

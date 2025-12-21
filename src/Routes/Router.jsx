@@ -23,6 +23,7 @@ import TransactionHistory from "../Pages/Dashboard/User/TransactionHistory";
 import ApprovedVendors from "../Pages/Dashboard/ApprovedVendors/ApprovedVendors";
 import UsersManagement from "../Pages/Dashboard/UsersManagement/UsersManagement";
 import AdminRoute from "./AdminRoute";
+import ManageUsers from "../Pages/Dashboard/Admin/ManageUsers";
 // import Payment from "../Pages/Dashboard/OnlinePayment/Payment";
 
 
@@ -49,6 +50,10 @@ export const router = createBrowserRouter([
             {
                 path: 'payment-success',
                 element: <PaymentSuccess></PaymentSuccess>,
+            },
+            {
+                path: "become-vendor",
+                element: <BecomeVendor></BecomeVendor>,
             },
         ]
     },
@@ -80,7 +85,7 @@ export const router = createBrowserRouter([
         children: [
             {
                 index: true,
-                element: <Profile></Profile>  
+                element: <Profile></Profile>
             },
 
             {
@@ -91,24 +96,21 @@ export const router = createBrowserRouter([
             },
 
             // User/customer pages
-            { 
-                path: "my-bookings", 
-                 element: <MyBookedTickets></MyBookedTickets>
+            {
+                path: "my-bookings",
+                element: <MyBookedTickets></MyBookedTickets>
             },
 
-            { 
-                path: "become-vendor", 
-                element: <BecomeVendor></BecomeVendor>,
-            },
-            { 
-                path: "transactions", 
+            
+            {
+                path: "transactions",
                 element: <TransactionHistory></TransactionHistory>
             },
 
             // Vendor pages
             {
                 path: "add-ticket",
-                element: <AddTicket /> 
+                element: <AddTicket />
             },
             // { path: "my-tickets", element: <MyAddedTickets /> },
             {
@@ -122,10 +124,13 @@ export const router = createBrowserRouter([
                 path: "manage-tickets",
                 element: <ManageTickets></ManageTickets>,
             },
-            // { path: "manage-users", element: <ManageUsers /> },
+            {
+                path: "manage-users",
+                element: <ManageUsers></ManageUsers>,
+            },
             // { path: "advertise", element: <AdvertiseTickets /> },
             {
-                path:'users-management',
+                path: 'users-management',
                 element: <AdminRoute>
                     <UsersManagement></UsersManagement>,
                 </AdminRoute>,

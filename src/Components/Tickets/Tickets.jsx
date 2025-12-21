@@ -1,15 +1,36 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import axios from 'axios';
 import LoadingSpinner from '../../LoaderPage/LoadingSpinner';
 import Container from '../../Pages/Container/Container';
 import TicketsCard from '../TicketsCard/TicketsCard';
+import useAxiosSecure from '../../Hooks/useAxiosSecure';
 
-const Tickets = () => {
+const Tickets = ({searchText,fromLocation,toLocation,transportType,sortOption}) => {
+   const axiosSecure = useAxiosSecure();
+   const getSortParams = () => {
+    if (sortOption === 'price-low') return { sortBy: 'price', sortOrder: 'asc' };
+    if (sortOption === 'price-high') return { sortBy: 'price', sortOrder: 'desc' };
+    return { sortBy: 'createdAt', sortOrder: 'desc' };
+  };
+  
+  const { sortBy, sortOrder } = getSortParams();
+
   const { data: tickets = [], isLoading, isError } = useQuery({
-    queryKey: ['tickets'],
+    queryKey: ['tickets',searchText,fromLocation, toLocation, transportType, sortBy, sortOrder],
     queryFn: async () => {
-      const res = await axios.get(`${import.meta.env.VITE_API_URL}/tickets`);
+      // const res = await axios.get(`${import.meta.env.VITE_API_URL}/tickets`);
+      // const res = await axios.get(`${import.meta.env.VITE_API_URL}/tickets?searchText=${searchText}`);
+      const res = await axiosSecure.get(`${import.meta.env.VITE_API_URL}/tickets`,{
+        params: {
+          searchText,
+          from: fromLocation,
+          to: toLocation,
+          transportType,
+          sortBy,
+          sortOrder
+        }
+      
+    });
       return res.data;
     },
   });
@@ -27,7 +48,10 @@ const Tickets = () => {
           ))}
         </div>
       ) : (
-        <p className="text-center text-gray-500">No tickets available.</p>
+        // <p className="text-center text-gray-500">No tickets available.</p>
+        <p className="text-center text-gray-500">
+          {searchText ? `No tickets found for "${searchText}"` : "No tickets available."}
+        </p>
       )}
     </Container>
   );
