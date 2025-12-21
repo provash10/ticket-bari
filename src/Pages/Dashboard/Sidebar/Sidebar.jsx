@@ -3,9 +3,12 @@ import useAuth from "../../../Hooks/useAuth";
 import { NavLink } from "react-router";
 import Navbar from "../../../Components/Header/Navbar";
 import LoadingSpinner from "../../../LoaderPage/LoadingSpinner";
+import useRole from "../../../Hooks/useRole";
 
 const Sidebar = () => {
     const { user, isRoleLoading } = useAuth();
+    const {role} = useRole();
+    console.log('in the sidebar dashboard', role)
     // const [role,isLoading] = userDB?.role;
     // const role = user?.role === "admin" 
     //     ? "admin" 
@@ -15,13 +18,14 @@ const Sidebar = () => {
 
     // const role = "user";
     // const role = "vendor";
-    const role = "admin";
+    // const role = "admin";
 
        if (isRoleLoading) return <LoadingSpinner />;
 
     return (
         <div>
             <li><NavLink to="users-management" className="font-bold">User Management</NavLink></li>
+            <li><NavLink to="approved-vendors" className="font-semibold">Approved Vendor</NavLink></li>
             {/* <h2 className="text-xl font-bold mb-20">User Management</h2> */}
             <aside className="w-64 bg-white shadow-lg min-h-screen p-5">
                 {/* <h2 className="text-xl font-bold mb-4">Dashboard</h2> */}

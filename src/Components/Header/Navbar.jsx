@@ -33,8 +33,8 @@ const Navbar = () => {
       <li><NavLink to='/all-tickets' className="font-bold">All Tickets</NavLink></li>
       <li><NavLink to='/dashboard' className="font-bold">Dashboard</NavLink></li>
       <li><NavLink to="become-vendor" className="font-bold">Become A Vendor</NavLink></li>
-      <li><NavLink to="approved-vendors" className="font-bold">Approved Vendor</NavLink></li>
-      <li><NavLink to="users-management" className="font-bold">User Management</NavLink></li>
+      {/* <li><NavLink to="approved-vendors" className="font-bold">Approved Vendor</NavLink></li> */}
+      {/* <li><NavLink to="users-management" className="font-bold">User Management</NavLink></li> */}
      
     </>
   )
