@@ -5,7 +5,7 @@ import LoadingSpinner from '../LoaderPage/LoadingSpinner';
 import Forbidden from '../Components/Forbidden/Forbidden';
 
 const AdminRoute = ({children}) => {
-    const {user, loading} =useAuth();
+    const {loading} = useAuth();
     const {role, roleLoading} = useRole();
 
     if(loading || roleLoading){

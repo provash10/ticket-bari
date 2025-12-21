@@ -85,7 +85,9 @@ export const router = createBrowserRouter([
 
             {
                 path: 'approved-vendors',
-                element: <ApprovedVendors></ApprovedVendors>,
+                element: <AdminRoute>
+                    <ApprovedVendors></ApprovedVendors>
+                </AdminRoute>,
             },
 
             // User/customer pages

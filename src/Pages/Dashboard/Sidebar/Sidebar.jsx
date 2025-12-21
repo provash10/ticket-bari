@@ -7,23 +7,24 @@ import LoadingSpinner from "../../../LoaderPage/LoadingSpinner";
 const Sidebar = () => {
     const { user, isRoleLoading } = useAuth();
     // const [role,isLoading] = userDB?.role;
-    const role = user?.role === "admin" 
-        ? "admin" 
-        : user?.role === "vendor" 
-            ? "vendor" 
-            : "user";
+    // const role = user?.role === "admin" 
+    //     ? "admin" 
+    //     : user?.role === "vendor" 
+    //         ? "vendor" 
+    //         : "user";
 
     // const role = "user";
     // const role = "vendor";
-    // const role = "admin";
+    const role = "admin";
 
        if (isRoleLoading) return <LoadingSpinner />;
 
     return (
         <div>
+            <li><NavLink to="users-management" className="font-bold">User Management</NavLink></li>
             {/* <h2 className="text-xl font-bold mb-20">User Management</h2> */}
             <aside className="w-64 bg-white shadow-lg min-h-screen p-5">
-                <h2 className="text-xl font-bold mb-4">Dashboard</h2>
+                {/* <h2 className="text-xl font-bold mb-4">Dashboard</h2> */}
 
                 {/* common profile */}
                 <ul className="space-y-1">

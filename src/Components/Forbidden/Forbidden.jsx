@@ -1,6 +1,6 @@
 import Lottie from "lottie-react";
-import forbiddenAnimationData from "../../assets/json/forbidden.json";
 import { Link } from "react-router";
+import forbiddenAnimation from "../../assets/json/forbidden.json";
 
 
 
@@ -11,7 +11,7 @@ const Forbidden = () => {
         options={{
           loop: false,
           autoplay: true,
-          animationData: forbiddenAnimationData,
+          animationData: forbiddenAnimation,
         }}
         height={200}
         width={200}
