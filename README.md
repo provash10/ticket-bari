@@ -14,3 +14,10 @@ The React Compiler is not enabled on this template because of its impact on dev 
 ## Expanding the ESLint configuration
 
 If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+
+Project Overview:
+Online Ticket Booking Platform - A comprehensive MERN stack-based ticket booking system where users can book bus, train, launch, and flight tickets with full authentication and payment integration.
+
+Three-Tier User System - Features distinct dashboards and functionalities for Customers, Vendors (who list tickets), and Administrators (who manage the platform).
+
+Production-Ready Application - Includes secure Firebase authentication, MongoDB database, Stripe payment processing, responsive design, and role-based access control for a seamless user experience.
