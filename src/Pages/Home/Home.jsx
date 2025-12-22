@@ -11,7 +11,6 @@ const reviewPromise = fetch('/reviews.json').then(res=>res.json());
 const Home = () => {
     return (
         <div>
-            <h3>Home Page</h3>
             <Banner></Banner>
             <AdvertisementSection></AdvertisementSection>
             <LatestTickets></LatestTickets>
