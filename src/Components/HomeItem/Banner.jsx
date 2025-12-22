@@ -13,24 +13,19 @@ const Banner = () => {
          <div className='border-5 rounded-2xl text-gray-400'>
             <Carousel autoPlay={true} infiniteLoop={true} interval={2000} showThumbs={false}>
                 <div>
-                    <img src={bannerImg1} className="h-[350px] w-full p-5 object-cover"/>
-                    {/* <p className="legend">Legend 1</p> */}
+                    <img src={bannerImg1} className="h-[350px] w-full p-5 object-cover"/>           
                 </div>
                 <div>
-                    <img src={bannerImg2} className="h-[350px] w-full p-5  object-cover"/>
-                    {/* <p className="legend">Legend 2</p> */}
+                    <img src={bannerImg2} className="h-[350px] w-full p-5  object-cover"/>  
                 </div>
                 <div>
                     <img src={bannerImg3} className="h-[350px] w-full p-5 object-cover"/>
-                    {/* <p className="legend">Legend 3</p> */}
                 </div>
                 <div>
                     <img src={bannerImg4} className="h-[350px] w-full p-5 object-cover"/>
-                    {/* <p className="legend">Legend 3</p> */}
                 </div>
                 <div>
                     <img src={bannerImg5} className="h-[350px] w-full p-5 object-cover"/>
-                    {/* <p className="legend">Legend 3</p> */}
                 </div>
             </Carousel>
          </div>

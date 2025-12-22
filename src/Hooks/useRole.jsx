@@ -1,49 +1,32 @@
-
-// import useAuth from './useAuth';
-// import useAxiosSecure from './useAxiosSecure';
-// import { useQuery } from '@tanstack/react-query';
-
-// const useRole = () => {
-//     const { user, loading } = useAuth();
-//     const axiosSecure = useAxiosSecure();
-
-//     const { data: role, isLoading: isRoleLoading } = useQuery({
-      
-//         enabled: !loading && !!user?.email,
-//         queryKey: ['role', user?.email],
-//         queryFn: async () => {
-          
-//             const { data } = await axiosSecure.get(`/user/role`);
-//             console.log('Role from server:', data.role);
-//             return data.role;
-//         },
-      
-//         retry: false 
-//     });
-
-//     return [role, isRoleLoading];
-// };
-
-// export default useRole;
-
 import React from 'react';
 import useAuth from './useAuth';
 import useAxiosSecure from './useAxiosSecure';
 import { useQuery } from '@tanstack/react-query';
+import LoadingSpinner from '../LoaderPage/LoadingSpinner';
 
 const useRole = () => {
-    const {user} = useAuth();
+    const {user,loading} = useAuth();
     const axiosSecure = useAxiosSecure();
+
     const {data: role = 'user', isLoading} = useQuery({
         queryKey: ['user-role', user?.email],
         queryFn: async()=>{
-            const res =await axiosSecure.get(`/users/${user.email}/role`);
+            
+            try{
+                const res =await axiosSecure.get(`/users/${user.email}/role`);
             console.log('in the useRole', res.data);
             return res.data?.role || 'user';
-        }
+            }
+            catch(error){
+                console.error(error);
+                return 'user';
+            }
+        },
+         enabled: !loading && !!user?.email,
+         retry: 1
     })
     
-    return {role,isLoading}
+    return {role, isLoading}
 };
 
 export default useRole;

@@ -3,44 +3,39 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'react-hot-toast';
 import useAuth from '../../../Hooks/useAuth';
 import { imageUpload } from '../../../Utils/index';
-import axios from 'axios';
 import { useMutation } from '@tanstack/react-query';
 import LoadingSpinner from '../../../LoaderPage/LoadingSpinner';
+import useAxiosSecure from '../../../Hooks/useAxiosSecure';
 
 const AddTicket = () => {
     const { user } = useAuth();
-
-    const { mutateAsync, isPending, isError, reset: mutationReset } = useMutation({
+    const axiosSecure = useAxiosSecure();
+    const { mutateAsync, isPending, reset: mutationReset } = useMutation({
         mutationFn: async (payload) => {
-            const res = await axios.post(
-                `${import.meta.env.VITE_API_URL}/tickets`,
-                payload
-            );
+            const res = await axiosSecure.post('/tickets', payload);
             return res.data;
         },
-        onSuccess: data => {
-            console.log(data);
-            toast.success("Ticket added successfully");
+        onSuccess: (data) => {
+            console.log('Ticket added:', data);
+            toast.success("Ticket added successfully!");
             mutationReset();
         },
-        onError: error => {
-            console.log(error);
-            toast.error("Failed to add ticket");
-        },
-        onMutate: payload => {
-            console.log('Posting this data--->', payload);
-        },
-        onSettled: (data, error) => {
-            console.log('From onSettled--->', data);
-            if (error) console.log(error);
-        },
-        retry: 3,
+        onError: (error) => {
+            console.error('Add ticket error:', error);
+            const message = error.response?.data?.message || "Failed to add ticket";
+            toast.error(message);
+        }
     });
 
     const { register, handleSubmit, watch, formState: { errors }, reset } = useForm();
 
     const onSubmit = async (data) => {
         try {
+            if (!data.image || data.image.length === 0) {
+                toast.error("Please upload an image");
+                return;
+            }
+
             const imageFile = data.image[0];
             const imageUrl = await imageUpload(imageFile);
             
@@ -55,71 +50,74 @@ const AddTicket = () => {
                 departure: data.departure,
                 perks: data.perks || [],
                 image: imageUrl,
-                status: "approved",  // ডিফল্ট
                 vendor: {
-                    image: user?.photoURL,
-                    name: user?.displayName,
+                    image: user?.photoURL || '',
+                    name: user?.displayName || user?.email?.split('@')[0],
                     email: user?.email,
-                },
-                createdAt: new Date().toISOString()  // নতুন ticket creation time
+                }
             };
 
-            reset();  // form reset
-            await mutateAsync(ticketData);  // server-এ post
+            await mutateAsync(ticketData);
+            reset(); 
         } catch (error) {
-            console.error(error);
-            toast.error("Failed to add ticket. Please try again.");
+            console.error('Submit error:', error);
+            toast.error("Image upload failed or invalid data.");
         }
     };
 
+    // watch values for real-time cal
+    const currentPrice = watch("price") || 0;
+    const currentQuantity = watch("quantity") || 0;
+    const totalPrice = currentPrice * currentQuantity;
+    const selectedImage = watch("image");
+
     if (isPending) return <LoadingSpinner />;
-    if (isError) return <div>Error occurred while adding ticket.</div>;
 
     return (
         <div className="max-w-4xl mx-auto p-6 bg-white shadow-md rounded-lg mt-6">
             <h2 className="text-3xl font-bold mb-6 text-center">Add New Ticket</h2>
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-                {/* Title */}
+
                 <div>
-                    <label className="block font-semibold mb-1">Ticket Title</label>
+                    <label className="block font-semibold mb-1">Ticket Title *</label>
                     <input
                         type="text"
-                        {...register("title", { required: true })}
+                        {...register("title", { required: "Ticket title is required" })}
                         className="input w-full border border-gray-300 rounded p-2"
                         placeholder="Enter ticket title"
                     />
-                    {errors.title && <p className="text-red-600">Ticket title is required</p>}
+                    {errors.title && <p className="text-red-600 text-sm mt-1">{errors.title.message}</p>}
                 </div>
 
-                {/* From & To */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label className="block font-semibold mb-1">From</label>
+                        <label className="block font-semibold mb-1">From *</label>
                         <input
                             type="text"
-                            {...register("from", { required: true })}
+                            {...register("from", { required: "From location is required" })}
                             className="input w-full border border-gray-300 rounded p-2"
+                            placeholder="e.g., Dhaka"
                         />
-                        {errors.from && <p className="text-red-600">From location is required</p>}
+                        {errors.from && <p className="text-red-600 text-sm mt-1">{errors.from.message}</p>}
                     </div>
                     <div>
-                        <label className="block font-semibold mb-1">To</label>
+                        <label className="block font-semibold mb-1">To *</label>
                         <input
                             type="text"
-                            {...register("to", { required: true })}
+                            {...register("to", { required: "To location is required" })}
                             className="input w-full border border-gray-300 rounded p-2"
+                            placeholder="e.g., Chittagong"
                         />
-                        {errors.to && <p className="text-red-600">To location is required</p>}
+                        {errors.to && <p className="text-red-600 text-sm mt-1">{errors.to.message}</p>}
                     </div>
                 </div>
 
-                {/* Transport Type & Price */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label className="block font-semibold mb-1">Transport Type</label>
+                        <label className="block font-semibold mb-1">Transport Type *</label>
                         <select
-                            {...register("transportType", { required: true })}
+                            {...register("transportType", { required: "Transport type is required" })}
                             className="input w-full border border-gray-300 rounded p-2"
                         >
                             <option value="">Select Transport Type</option>
@@ -128,100 +126,143 @@ const AddTicket = () => {
                             <option value="Launch">Launch</option>
                             <option value="Plane">Plane</option>
                         </select>
-                        {errors.transportType && <p className="text-red-600">Transport type is required</p>}
+                        {errors.transportType && <p className="text-red-600 text-sm mt-1">{errors.transportType.message}</p>}
                     </div>
                     <div>
-                        <label className="block font-semibold mb-1">Price (per unit)</label>
+                        <label className="block font-semibold mb-1">Price (per unit) *</label>
                         <input
                             type="number"
-                            {...register("price", { required: true, min: 0 })}
+                            min="0"
+                            step="0.01"
+                            {...register("price", { 
+                                required: "Price is required",
+                                min: { value: 0, message: "Price must be positive" }
+                            })}
                             className="input w-full border border-gray-300 rounded p-2"
+                            placeholder="e.g., 500"
                         />
-                        {errors.price && <p className="text-red-600">Price is required</p>}
+                        {errors.price && <p className="text-red-600 text-sm mt-1">{errors.price.message}</p>}
                     </div>
                 </div>
 
-                {/* Quantity & Departure */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label className="block font-semibold mb-1">Ticket Quantity</label>
+                        <label className="block font-semibold mb-1">Ticket Quantity *</label>
                         <input
                             type="number"
-                            {...register("quantity", { required: true, min: 1 })}
+                            min="1"
+                            {...register("quantity", { 
+                                required: "Quantity is required",
+                                min: { value: 1, message: "Quantity must be at least 1" }
+                            })}
                             className="input w-full border border-gray-300 rounded p-2"
+                            placeholder="e.g., 10"
                         />
-                        {errors.quantity && <p className="text-red-600">Quantity is required</p>}
+                        {errors.quantity && <p className="text-red-600 text-sm mt-1">{errors.quantity.message}</p>}
                     </div>
                     <div>
-                        <label className="block font-semibold mb-1">Departure Date & Time</label>
+                        <label className="block font-semibold mb-1">Departure Date & Time *</label>
                         <input
                             type="datetime-local"
-                            {...register("departure", { required: true })}
+                            {...register("departure", { required: "Departure is required" })}
                             className="input w-full border border-gray-300 rounded p-2"
                         />
-                        {errors.departure && <p className="text-red-600">Departure is required</p>}
+                        {errors.departure && <p className="text-red-600 text-sm mt-1">{errors.departure.message}</p>}
                     </div>
-                    <div>
-                        <label className="block font-semibold mb-1">Total Price</label>
-                        <input
-                            type="number"
-                            value={
-                                (Number(watch("price")) || 0) * (Number(watch("quantity")) || 0)
-                            }
-                            className="input w-full border border-gray-300 rounded p-2 bg-gray-100"
-                            disabled
-                        />
-                    </div>
+                </div>
+
+                <div>
+                    <label className="block font-semibold mb-1">Total Price (Auto)</label>
+                    <input
+                        type="text"
+                        value={`$${totalPrice.toFixed(2)}`}
+                        className="input w-full border border-gray-300 rounded p-2 bg-gray-100 font-bold"
+                        disabled
+                        readOnly
+                    />
+                    <p className="text-sm text-gray-500 mt-1">Price × Quantity = Total</p>
                 </div>
 
                 {/* Perks */}
                 <div>
-                    <label className="block font-semibold mb-1">Perks</label>
+                    <label className="block font-semibold mb-1">Perks (Optional)</label>
                     <div className="flex flex-wrap gap-4">
                         {["AC", "Breakfast", "WiFi", "Meal"].map((perk) => (
-                            <label key={perk} className="flex items-center gap-2">
-                                <input type="checkbox" {...register("perks")} value={perk} />
-                                {perk}
+                            <label key={perk} className="flex items-center gap-2 cursor-pointer">
+                                <input 
+                                    type="checkbox" 
+                                    {...register("perks")} 
+                                    value={perk}
+                                    className="checkbox checkbox-sm"
+                                />
+                                <span>{perk}</span>
                             </label>
                         ))}
                     </div>
                 </div>
 
-                {/* Image Upload */}
                 <div className="p-4 w-full rounded-lg">
-                    <label className="block font-semibold mb-2">Ticket Image</label>
-                    <div className="border-4 border-dotted border-gray-300 rounded-lg py-6 text-center">
-                        <label>
+                    <label className="block font-semibold mb-2">Ticket Image *</label>
+                    <div className="border-2 border-dashed border-gray-300 rounded-lg py-8 text-center hover:border-blue-400 transition">
+                        <label className="cursor-pointer">
                             <input
                                 type="file"
                                 accept="image/*"
                                 hidden
                                 {...register("image", { required: "Image is required" })}
                             />
-                            <div className="inline-block bg-blue-500 text-white px-4 py-2 rounded cursor-pointer">
-                                Upload Image
+                            <div className="inline-block bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg cursor-pointer transition">
+                                {selectedImage?.[0] ? selectedImage[0].name : "Upload Image"}
                             </div>
                         </label>
+                        <p className="text-sm text-gray-500 mt-2">
+                            {selectedImage?.[0] ? `Selected: ${selectedImage[0].name}` : "Click to upload ticket image"}
+                        </p>
                         {errors.image && <p className="text-red-600 text-sm mt-2">{errors.image.message}</p>}
                     </div>
                 </div>
 
-                {/* Vendor Info */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label className="block font-semibold mb-1">Vendor Name</label>
-                        <input value={user?.displayName} type="text" className="input w-full border border-gray-300 rounded p-2 bg-gray-100" disabled />
+                        <input 
+                            value={user?.displayName || user?.email?.split('@')[0] || 'Unknown'} 
+                            type="text" 
+                            className="input w-full border border-gray-300 rounded p-2 bg-gray-100" 
+                            disabled 
+                            readOnly
+                        />
                     </div>
                     <div>
                         <label className="block font-semibold mb-1">Vendor Email</label>
-                        <input value={user?.email} type="text" className="input w-full border border-gray-300 rounded p-2 bg-gray-100" disabled />
+                        <input 
+                            value={user?.email || 'No email'} 
+                            type="text" 
+                            className="input w-full border border-gray-300 rounded p-2 bg-gray-100" 
+                            disabled 
+                            readOnly
+                        />
                     </div>
                 </div>
 
-                {/* Submit */}
-                <div className="text-center mt-4">
-                    <button type="submit" className="btn btn-primary w-full" disabled={isPending}>
-                        {isPending ? "Adding..." : "Save & Continue"}
+                <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <p className="text-sm text-blue-700">
+                        <strong>Note:</strong> After adding, ticket status will be "pending" until admin approval.
+                    </p>
+                </div>
+
+                <div className="text-center mt-6">
+                    <button 
+                        type="submit" 
+                        className="btn btn-primary w-full py-3 text-lg font-bold" 
+                        disabled={isPending}
+                    >
+                        {isPending ? (
+                            <span className="flex items-center justify-center">
+                                <span className="loading loading-spinner loading-sm mr-2"></span>
+                                Adding Ticket...
+                            </span>
+                        ) : "Add Ticket"}
                     </button>
                 </div>
             </form>

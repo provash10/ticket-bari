@@ -19,7 +19,6 @@ const TicketsCard = ({ ticket }) => {
   return (
     <div className="card bg-white border border-gray-200 rounded-xl shadow hover:shadow-xl transition h-full">
 
-      {/* image */}
       <figure className="h-48 w-full overflow-hidden rounded-t-xl">
         <img
           src={image}

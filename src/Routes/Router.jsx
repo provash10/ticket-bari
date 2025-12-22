@@ -16,7 +16,7 @@ import AllTickets from "../Pages/Home/AllTickets";
 import PaymentSuccess from "../Components/Payment/PaymentSuccess";
 import RequestedBookings from "../Pages/Dashboard/Vendor/RequestedBookings";
 import ManageTickets from "../Pages/Dashboard/Admin/ManageTickets";
-import Profile from "../Pages/Dashboard/Profile/Profile";
+
 import BecomeVendor from "../Pages/Dashboard/User/BecomeVendor";
 import MyBookedTickets from "../Pages/Dashboard/User/MyBookedTickets";
 import TransactionHistory from "../Pages/Dashboard/User/TransactionHistory";
@@ -24,7 +24,16 @@ import ApprovedVendors from "../Pages/Dashboard/ApprovedVendors/ApprovedVendors"
 import UsersManagement from "../Pages/Dashboard/UsersManagement/UsersManagement";
 import AdminRoute from "./AdminRoute";
 import ManageUsers from "../Pages/Dashboard/Admin/ManageUsers";
-// import Payment from "../Pages/Dashboard/OnlinePayment/Payment";
+import LatestTickets from "../Components/HomeItem/LatestTickets";
+import MyAddedTickets from "../Pages/Dashboard/Vendor/MyAddedTickets";
+import UpdateTicket from "../Components/Tickets/UpdateTicket";
+import RevenueOverview from "../Pages/Dashboard/Vendor/RevenueOverview";
+import AdvertiseTickets from "../Pages/Dashboard/Admin/AdvertiseTickets";
+import DashboardHome from "../Pages/Dashboard/DashboardHome/DashboardHome";
+// import ProfileWrapper from "../Pages/Dashboard/Profile/ProfileWrapper";
+import ProfileWrapper from "../Pages/Dashboard/Profile/ProfileWrapper.jsx";
+import UserRoute from "./UserRoute";
+import VendorRoute from "./VendorRoute";
 
 
 
@@ -41,11 +50,19 @@ export const router = createBrowserRouter([
             },
             {
                 path: 'all-tickets',
-                element: <AllTickets></AllTickets>,
+                element: <PrivateRoute>
+                    <AllTickets></AllTickets>
+                </PrivateRoute>,
+            },
+            {
+                path: 'latest-tickets',
+                element: <LatestTickets></LatestTickets>,
             },
             {
                 path: 'ticket/:id',
-                element: <TicketDetails></TicketDetails>,
+                element: <PrivateRoute>
+                    <TicketDetails></TicketDetails>
+                </PrivateRoute>,
             },
             {
                 path: 'payment-success',
@@ -85,9 +102,12 @@ export const router = createBrowserRouter([
         children: [
             {
                 index: true,
-                element: <Profile></Profile>
+                element: <DashboardHome></DashboardHome>
             },
-
+            {
+                path: 'profile',
+                element: <ProfileWrapper></ProfileWrapper>
+            },
             {
                 path: 'approved-vendors',
                 element: <AdminRoute>
@@ -98,43 +118,69 @@ export const router = createBrowserRouter([
             // User/customer pages
             {
                 path: "my-bookings",
-                element: <MyBookedTickets></MyBookedTickets>
+                element: <UserRoute>
+                    <MyBookedTickets></MyBookedTickets>
+                    </UserRoute>,
             },
-
-            
             {
                 path: "transactions",
-                element: <TransactionHistory></TransactionHistory>
+                element: <UserRoute>
+                    <TransactionHistory></TransactionHistory>
+                    </UserRoute>,
             },
 
             // Vendor pages
             {
                 path: "add-ticket",
-                element: <AddTicket />
+                element: <VendorRoute>
+                    <AddTicket></AddTicket>
+                </VendorRoute>,
             },
-            // { path: "my-tickets", element: <MyAddedTickets /> },
+            {
+                path: "my-added-tickets",
+                element: <VendorRoute>
+                    <MyAddedTickets></MyAddedTickets>
+                    </VendorRoute>,
+            },
+            {
+                path: "update-ticket/:id",
+                element: <VendorRoute>
+                    <UpdateTicket></UpdateTicket>
+                    </VendorRoute>,
+            },
             {
                 path: "requested-bookings",
-                element: <RequestedBookings></RequestedBookings>
+                element: <VendorRoute>
+                    <RequestedBookings></RequestedBookings>
+                    </VendorRoute>,
             },
-            // { path: "revenue-overview", element: <RevenueOverview /> },
+            {
+                path: "revenue-overview",
+                element: <VendorRoute>
+                    <RevenueOverview></RevenueOverview>
+                    </VendorRoute>,
+            },
 
             // Admin pages
             {
                 path: "manage-tickets",
-                element: <ManageTickets></ManageTickets>,
+                element: <AdminRoute>
+                    <ManageTickets></ManageTickets>
+                </AdminRoute>,
             },
             {
                 path: "manage-users",
-                element: <ManageUsers></ManageUsers>,
-            },
-            // { path: "advertise", element: <AdvertiseTickets /> },
-            {
-                path: 'users-management',
                 element: <AdminRoute>
-                    <UsersManagement></UsersManagement>,
+                    <ManageUsers></ManageUsers>
                 </AdminRoute>,
             },
+            {
+                path: "advertise",
+                element: <AdminRoute>
+                    <AdvertiseTickets></AdvertiseTickets>
+                </AdminRoute>,
+            },
+
         ]
     }
 ])

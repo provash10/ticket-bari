@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState,} from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { useParams } from "react-router";
@@ -18,13 +18,22 @@ const TicketDetails = () => {
   const [selectedPerks, setSelectedPerks] = useState([]);
   const [quantity, setQuantity] = useState(1);
 
-  const { data: ticket = {}, isLoading } = useQuery({
-    queryKey: ["ticket", id],
-    queryFn: async () => {
-      const res = await axios(`${import.meta.env.VITE_API_URL}/tickets/${id}`);
-      return res.data;
-    },
-  });
+  // const { data: ticket = {}, isLoading } = useQuery({
+  //   queryKey: ["ticket", id],
+  //   queryFn: async () => {
+  //     const res = await axios(`${import.meta.env.VITE_API_URL}/tickets/${id}`);
+  //     return res.data;
+  //   },
+  // });
+  const { data: ticket = {}, isLoading, isError } = useQuery({
+  queryKey: ["ticket", id],
+  queryFn: async () => {
+    const res = await axios(`${import.meta.env.VITE_API_URL}/tickets/${id}`);
+    return res.data;
+  },
+});
+
+if (isError) return <div>Error loading ticket details</div>;
 
   const { title, image, from, to, transportType, perks = [], price, availableTickets, departure, vendor = {} } = ticket || {};
   const totalPrice = price * quantity;
@@ -50,8 +59,9 @@ const TicketDetails = () => {
 
   if (isLoading) return <LoadingSpinner />;
 
-  const isExpired = new Date(departure) < new Date();
-  const isSoldOut = availableTickets === 0;
+  const isExpired = ticket?.isDeparted || new Date(departure) < new Date();
+const isSoldOut = !ticket?.isAvailable || availableTickets === 0;
+const canBook = ticket?.canBook && !isExpired && !isSoldOut;
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
@@ -103,13 +113,17 @@ const TicketDetails = () => {
             <div className="flex items-center gap-2">
               <span className="font-semibold">Quantity</span>
               <input
-                type="number"
-                min={1}
-                max={availableTickets}
-                value={quantity}
-                onChange={(e) => setQuantity(Number(e.target.value))}
-                className="w-16 border rounded px-2 py-1"
-              />
+  type="number"
+  min={1}
+  max={ticket?.canBook ? availableTickets : 0}
+  value={quantity}
+  onChange={(e) => {
+    const val = Number(e.target.value);
+    if (val <= availableTickets && val >= 1) {
+      setQuantity(val);
+    }
+  }}
+/>
             </div>
 
             <p className="text-xl font-bold text-primary">$ {price} / ticket</p>
@@ -118,25 +132,29 @@ const TicketDetails = () => {
           <p className="text-lg font-bold text-green-600">Total: $ {totalPrice}</p>
 
           <Button
-            onClick={() => setIsOpen(true)}
-            disabled={isExpired || isSoldOut}
-            className="btn btn-primary w-full"
-          >
-            {isSoldOut ? "Sold Out" : "Book Now"}
-          </Button>
+  onClick={() => setIsOpen(true)}
+  disabled={!ticket?.canBook || isExpired || isSoldOut}
+  className="btn btn-primary w-full"
+>
+  {!ticket?.canBook ? "Not Available" : 
+   isSoldOut ? "Sold Out" : 
+   isExpired ? "Departed" : "Book Now"}
+</Button>
         </div>
       </div>
 
       <BookModal
-        ticket={ticket}
-        isOpen={isOpen}
-        closeModal={() => setIsOpen(false)}
-        selectedPerks={selectedPerks}
-        quantity={quantity}
-        totalPrice={totalPrice}
-        queryClient={queryClient} 
-        user={user}
-      />
+  ticket={ticket}
+  isOpen={isOpen}
+  closeModal={() => setIsOpen(false)}
+  selectedPerks={selectedPerks}
+  quantity={quantity}
+  totalPrice={totalPrice}
+  queryClient={queryClient}
+  user={user}
+  canBook={ticket?.canBook}
+  maxQuantity={ticket?.availableTickets || 0}
+/>
     </div>
   );
 };

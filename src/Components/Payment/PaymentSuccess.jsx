@@ -1,5 +1,5 @@
- import React from 'react';
- import axios from 'axios';
+import React from 'react';
+import axios from 'axios';
 import { useEffect, useState } from 'react';
 
 import { IoBagCheckOutline } from 'react-icons/io5';
@@ -8,7 +8,7 @@ import { Link, useSearchParams } from 'react-router';
 const PaymentSuccess = () => {
   const [searchParams] = useSearchParams();
   const sessionId = searchParams.get('session_id');
-  const [status, setStatus] = useState('loading'); 
+  const [status, setStatus] = useState('loading');
 
   useEffect(() => {
     if (sessionId) {
@@ -49,20 +49,20 @@ const PaymentSuccess = () => {
         <p className="text-gray-600 mb-6">
           Thank you for your purchase. Your order is being processed.
         </p>
-       <div className='flex justify-between items-center gap-2'>
-         <Link
-          to="/dashboard/my-bookings"
-          className="inline-block bg-lime-500 text-white font-semibold py-2 px-4 rounded hover:bg-lime-600 transition duration-300"
-        >
-          Go to My Bookings Page.
-        </Link>
-        <Link
-          to="/dashboard/transactions"
-          className="inline-block bg-lime-500 text-white font-semibold py-2 px-4 rounded hover:bg-lime-600 transition duration-300"
-        >
-          See Transaction History.
-        </Link>
-       </div>
+        <div className='flex justify-between items-center gap-2'>
+          <Link
+            to="/dashboard/my-bookings"
+            className="inline-block bg-lime-500 text-white font-semibold py-2 px-4 rounded hover:bg-lime-600 transition duration-300"
+          >
+            Go to My Bookings Page.
+          </Link>
+          <Link
+            to="/dashboard/transactions"
+            className="inline-block bg-lime-500 text-white font-semibold py-2 px-4 rounded hover:bg-lime-600 transition duration-300"
+          >
+            See Transaction History.
+          </Link>
+        </div>
 
       </div>
     </div>

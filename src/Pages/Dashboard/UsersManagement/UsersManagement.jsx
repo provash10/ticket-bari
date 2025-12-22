@@ -77,7 +77,7 @@ const UsersManagement = () => {
                 </label>
 
                 <table className="table">
-                    {/* head */}
+                  
                     <thead>
                         <tr>
                             <th>
