@@ -42,7 +42,15 @@ const ManageTickets = () => {
   } = useQuery({
     queryKey: ['admin-tickets', filterStatus, filterType, searchTerm],
     queryFn: async () => {
-      const res = await axiosSecure.get('/tickets/admin/pending');
+      // const res = await axiosSecure.get('/tickets/admin/pending');
+      const res = await axiosSecure.get('/tickets/admin/all',{
+        params: {
+        status: filterStatus,
+        transportType: filterType,
+        search: searchTerm
+      }
+      });
+      
       return res.data;
     }
   });

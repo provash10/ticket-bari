@@ -18,13 +18,6 @@ const TicketDetails = () => {
   const [selectedPerks, setSelectedPerks] = useState([]);
   const [quantity, setQuantity] = useState(1);
 
-  // const { data: ticket = {}, isLoading } = useQuery({
-  //   queryKey: ["ticket", id],
-  //   queryFn: async () => {
-  //     const res = await axios(`${import.meta.env.VITE_API_URL}/tickets/${id}`);
-  //     return res.data;
-  //   },
-  // });
   const { data: ticket = {}, isLoading, isError } = useQuery({
   queryKey: ["ticket", id],
   queryFn: async () => {

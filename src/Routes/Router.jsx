@@ -118,15 +118,15 @@ export const router = createBrowserRouter([
             // User/customer pages
             {
                 path: "my-bookings",
-                element: <UserRoute>
-                    <MyBookedTickets></MyBookedTickets>
-                    </UserRoute>,
+                element: 
+                    <MyBookedTickets></MyBookedTickets>,
+                    
             },
             {
                 path: "transactions",
-                element: <UserRoute>
-                    <TransactionHistory></TransactionHistory>
-                    </UserRoute>,
+                element:
+                    <TransactionHistory></TransactionHistory>,
+                  
             },
 
             // Vendor pages
@@ -150,9 +150,9 @@ export const router = createBrowserRouter([
             },
             {
                 path: "requested-bookings",
-                element: <VendorRoute>
-                    <RequestedBookings></RequestedBookings>
-                    </VendorRoute>,
+                element:
+                    <RequestedBookings></RequestedBookings>,
+                    
             },
             {
                 path: "revenue-overview",
@@ -164,9 +164,9 @@ export const router = createBrowserRouter([
             // Admin pages
             {
                 path: "manage-tickets",
-                element: <AdminRoute>
-                    <ManageTickets></ManageTickets>
-                </AdminRoute>,
+                element: 
+                    <ManageTickets></ManageTickets>,
+                
             },
             {
                 path: "manage-users",

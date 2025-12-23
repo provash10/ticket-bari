@@ -25,13 +25,11 @@ const BookModal = ({
   const [isLoading, setIsLoading] = useState(false); 
 
   const handleBooking = async () => {
-    //  1. User check
     if (!user) {
       toast.error("Please login first");
       return;
     }
 
-    //  2. Quantity validation
     if (quantity < 1) {
       toast.error("Quantity must be at least 1");
       return;
@@ -42,13 +40,11 @@ const BookModal = ({
       return;
     }
 
-    //  3. Can book check
     if (!canBook) {
       toast.error("Ticket is not available for booking");
       return;
     }
 
-    //  4. Departure time check
     const departureTime = new Date(departure);
     const now = new Date();
     if (departureTime < now) {
@@ -56,7 +52,6 @@ const BookModal = ({
       return;
     }
 
-    //  5. Max quantity check
     if (maxQuantity && quantity > maxQuantity) {
       toast.error(`Maximum ${maxQuantity} tickets allowed`);
       return;
@@ -65,7 +60,7 @@ const BookModal = ({
     setIsLoading(true);
 
     try {
-      //  6. token
+      // token 
       const currentUser = auth.currentUser;
       if (!currentUser) {
         toast.error("Please login again");
@@ -79,7 +74,7 @@ const BookModal = ({
         return;
       }
 
-      //  7. Booking data prepare
+      //  booking data prepare
       const bookingData = {
         ticketId: _id,
         title: title,
@@ -105,7 +100,6 @@ const BookModal = ({
         createdAt: new Date(),
       };
 
-      //  8. API call
       const response = await axios.post(
         `${import.meta.env.VITE_API_URL}/bookings`, 
         bookingData, 
@@ -117,18 +111,15 @@ const BookModal = ({
         }
       );
 
-      //  9. Success handling
       if (response.data.success) {
         toast.success("Booking request submitted successfully!");
         closeModal();
-        
-        //  10. Query cache update
+
         if (queryClient) {
           queryClient.invalidateQueries(['my-bookings', user.email]);
           queryClient.invalidateQueries(['ticket', _id]);
         }
         
-        //  11. Navigate
         setTimeout(() => {
           navigate("/dashboard/my-bookings");
         }, 1000);
@@ -139,7 +130,6 @@ const BookModal = ({
     } catch (error) {
       console.error("Booking API error:", error);
       
-      //  12. Improved error handling
       if (error.response?.status === 400) {
         toast.error(error.response.data?.message || "Validation error");
       } else if (error.response?.status === 401) {
