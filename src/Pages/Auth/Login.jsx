@@ -6,10 +6,12 @@ import GoogleLogin from './GoogleLogin';
 import { AiFillEye, AiFillEyeInvisible } from 'react-icons/ai';
 import toast from 'react-hot-toast';
 import { saveOrUpdateUser } from '../../Utils';
+import { useTheme } from '../../Contexts/ThemeContext';
 
 const Login = () => {
     const { register, handleSubmit, formState: { errors } } = useForm();
     const { signInUser } = useAuth();
+    const { isDarkMode } = useTheme();
     const navigate = useNavigate();
     const location = useLocation();
     console.log('in the login page', location);
@@ -40,38 +42,55 @@ const Login = () => {
 
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-100">
+        <div className={`min-h-screen flex items-center justify-center transition-colors duration-300 ${
+            isDarkMode ? 'bg-gray-900' : 'bg-gray-100'
+        }`}>
 
+            <div className={`w-full shadow-xl grid grid-cols-1 md:grid-cols-2 transition-colors duration-300 ${
+                isDarkMode ? 'bg-gray-800' : 'bg-white'
+            }`}>
 
-            <div className="w-full bg-white shadow-xl grid grid-cols-1 md:grid-cols-2">
-
-
-                <div className="hidden md:flex items-center justify-center p-6 bg-gray-200">
-                    <h3 className="text-3xl font-semibold text-center">Welcome Back</h3>
+                <div className={`hidden md:flex items-center justify-center p-6 transition-colors duration-300 ${
+                    isDarkMode ? 'bg-gray-700' : 'bg-gray-200'
+                }`}>
+                    <h3 className={`text-3xl font-semibold text-center transition-colors duration-300 ${
+                        isDarkMode ? 'text-white' : 'text-gray-900'
+                    }`}>Welcome Back</h3>
                 </div>
 
-
                 <div className="p-8 flex flex-col justify-center items-center h-full">
-                    <h2 className="text-3xl font-semibold text-center">Welcome To Ticket Bari</h2>
-                    <p className="text-xl font-semibold text-center mb-6">Please Login...</p>
+                    <h2 className={`text-3xl font-semibold text-center transition-colors duration-300 ${
+                        isDarkMode ? 'text-white' : 'text-gray-900'
+                    }`}>Welcome To Ticket Bari</h2>
+                    <p className={`text-xl font-semibold text-center mb-6 transition-colors duration-300 ${
+                        isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                    }`}>Please Login...</p>
 
                     <form onSubmit={handleSubmit(handleLogin)} className="w-full max-w-lg">
                         <fieldset className="fieldset">
 
-                            <label className="label">Email</label>
+                            <label className={`label transition-colors duration-300 ${
+                                isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                            }`}>Email</label>
                             <input
                                 name='email'
                                 type="email"
                                 {...register("email", { required: true })}
-                                className="input w-full"
+                                className={`input w-full transition-colors duration-300 ${
+                                    isDarkMode 
+                                        ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-green-500' 
+                                        : 'bg-white border-gray-300 text-gray-900 focus:border-green-500'
+                                }`}
                                 placeholder="Email"
                                 id='email'
                             />
                             {errors.email?.type === "required" &&
-                                <p className="text-red-700">Email is required</p>
+                                <p className="text-red-500">Email is required</p>
                             }
 
-                            <label className="label mt-3">Password</label>
+                            <label className={`label mt-3 transition-colors duration-300 ${
+                                isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                            }`}>Password</label>
                             <div className='relative'>
                                 <input
                                     // type="password"
@@ -84,12 +103,18 @@ const Login = () => {
 
                                     })}
                                     name='password'
-                                    className="input w-full"
+                                    className={`input w-full transition-colors duration-300 ${
+                                        isDarkMode 
+                                            ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-green-500' 
+                                            : 'bg-white border-gray-300 text-gray-900 focus:border-green-500'
+                                    }`}
                                     placeholder="Password"
                                     id='password'
                                 />
                                 <span
-                                    className="absolute right-2 top-2.5 cursor-pointer text-gray-600"
+                                    className={`absolute right-2 top-2.5 cursor-pointer transition-colors duration-300 ${
+                                        isDarkMode ? 'text-gray-400 hover:text-gray-200' : 'text-gray-600 hover:text-gray-800'
+                                    }`}
                                     onClick={() => setShowPassword(!showPassword)}
                                 >
                                     {showPassword ? <AiFillEyeInvisible size={20} /> : <AiFillEye size={20} />}
@@ -97,25 +122,35 @@ const Login = () => {
                             </div>
 
                             {errors.password?.type === "required" &&
-                                <p className="text-red-600">Password is Required</p>
+                                <p className="text-red-500">Password is Required</p>
                             }
                             {errors.password?.type === "minLength" &&
-                                <p className="text-red-600">Password must be at least 8 characters</p>
+                                <p className="text-red-500">Password must be at least 8 characters</p>
                             }
                             {errors.password?.type === "pattern" &&
-                                <p className="text-red-600">Must include uppercase, lowercase, number & special character</p>
+                                <p className="text-red-500">Must include uppercase, lowercase, number & special character</p>
                             }
 
                             <div className="mt-2">
-                                <a className="link link-hover">Forgot password?</a>
+                                <a className={`link link-hover transition-colors duration-300 ${
+                                    isDarkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-800'
+                                }`}>Forgot password?</a>
                             </div>
 
-                            <button type="submit" className="btn btn-neutral mt-4 w-full">
+                            <button type="submit" className={`btn mt-4 w-full transition-all duration-300 hover:scale-105 ${
+                                isDarkMode 
+                                    ? 'bg-green-600 hover:bg-green-700 text-white border-green-600' 
+                                    : 'btn-neutral'
+                            }`}>
                                 Login
                             </button>
 
                         </fieldset>
-                        <p className='text-sm font-bold mt-4'>Don't Have An Account ? - Ticket Bari. <Link state={location.state} to='/auth/register' className='text-blue-800 hover:text-green-500'>Please Register</Link></p>
+                        <p className={`text-sm font-bold mt-4 transition-colors duration-300 ${
+                            isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                        }`}>Don't Have An Account ? - Ticket Bari. <Link state={location.state} to='/auth/register' className={`transition-colors duration-300 ${
+                            isDarkMode ? 'text-blue-400 hover:text-green-400' : 'text-blue-800 hover:text-green-500'
+                        }`}>Please Register</Link></p>
                     </form>
                     <GoogleLogin></GoogleLogin>
                 </div>
