@@ -3,35 +3,36 @@ import useAuth from "../Hooks/useAuth";
 import Sidebar from "../Pages/Dashboard/Sidebar/Sidebar";
 import { Outlet } from "react-router";
 import Navbar from "../Components/Header/Navbar";
-import ApprovedVendors from "../Pages/Dashboard/ApprovedVendors/ApprovedVendors";
-
 
 const DashboardLayout = () => {
-  const { user, loading } = useAuth();
+  const { loading } = useAuth();
 
   if (loading) {
     return (
-      <div className="w-full h-screen flex items-center justify-center">
-        <span className="loading loading-spinner loading-lg"></span>
+      <div className="w-full h-screen flex items-center justify-center bg-base-200">
+        <span className="loading loading-spinner loading-lg text-primary"></span>
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto">
-      <Navbar></Navbar>
-      
-       <div className="flex min-h-screen">
-      {/* sidebar */}
-      <Sidebar />
+    <div className="max-w-7xl mx-auto bg-base-200 min-h-screen">
+      <Navbar />
 
-      {/* main content */}
-      <div className="flex-1 bg-gray-100 p-6">
-        <Outlet />
-      </div>
+      <div className="flex min-h-[calc(100vh-64px)]">
+        {/* Sidebar */}
+        <Sidebar />
+
+        {/* Main Content */}
+        <main className="flex-1 p-4 md:p-6 lg:p-8">
+          <div className="bg-base-100 rounded-2xl shadow-sm min-h-full">
+            <Outlet />
+          </div>
+        </main>
       </div>
     </div>
   );
 };
 
 export default DashboardLayout;
+

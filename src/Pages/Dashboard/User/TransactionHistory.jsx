@@ -23,12 +23,19 @@ const TransactionHistory = () => {
       <h2 className="text-xl font-semibold mb-4">Transaction History</h2>
       <table className="table-auto w-full border">
         <thead>
-          <tr className="bg-gray-200">
+          {/* <tr className="bg-gray-200">
             <th className="px-4 py-2">Transaction ID</th>
             <th className="px-4 py-2">Ticket Title</th>
             <th className="px-4 py-2">Amount</th>
             <th className="px-4 py-2">Payment Date</th>
-          </tr>
+          </tr> */}
+          <tr className="bg-gray-200 dark:bg-gray-700">
+    <th className="px-4 py-2 text-gray-800 dark:text-gray-200">No</th>
+    <th className="px-4 py-2 text-gray-800 dark:text-gray-200">Transaction ID</th>
+    <th className="px-4 py-2 text-gray-800 dark:text-gray-200">Ticket Title</th>
+    <th className="px-4 py-2 text-gray-800 dark:text-gray-200">Amount</th>
+    <th className="px-4 py-2 text-gray-800 dark:text-gray-200">Payment Date</th>
+  </tr>
         </thead>
         <tbody>
           {transactions.map((transaction,index) => (

@@ -1,102 +1,265 @@
-import React, { useState } from 'react';
-import Tickets from '../../Components/Tickets/Tickets';
+import { useState } from "react";
+import Tickets from "../../Components/Tickets/Tickets";
+import Container from "../Container/Container";
+import { useTheme } from "../../Contexts/ThemeContext";
+import { getVisibilityClasses } from "../../Utils/visibilityHelpers";
+import {
+  FaSearch, FaMapMarkerAlt, FaRoute, FaBus, FaTrain, FaPlane, FaShip,
+  FaSort, FaFilter, FaTicketAlt, FaSync
+} from "react-icons/fa";
 
 const AllTickets = () => {
-    const [searchText, setSearchText] = useState('');
-    const [fromLocation, setFromLocation] = useState('');
-    const [toLocation, setToLocation] = useState('');
-    const [transportType, setTransportType] = useState('all');
-    const [sortOption, setSortOption] = useState('newest');
-    return (
-        <div>
-            <div>
-                <label className="input m-4">
-                    <svg className="h-[1em] opacity-50" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                        <g
-                            strokeLinejoin="round"
-                            strokeLinecap="round"
-                            strokeWidth="2.5"
-                            fill="none"
-                            stroke="currentColor"
-                        >
-                            <circle cx="11" cy="11" r="8"></circle>
-                            <path d="m21 21-4.3-4.3"></path>
-                        </g>
-                    </svg>
-                    <input onChange={(e) => setSearchText(e.target.value)}
-                        type="search" className="grow" placeholder="Search" />
-                </label>
+  const { isDarkMode } = useTheme();
+  const visibilityClasses = getVisibilityClasses(isDarkMode);
+  const [searchText, setSearchText] = useState("");
+  const [fromLocation, setFromLocation] = useState("");
+  const [toLocation, setToLocation] = useState("");
+  const [transportType, setTransportType] = useState("all");
+  const [sortOption, setSortOption] = useState("newest");
 
-                <label className="input input-bordered flex items-center gap-2">
-                    <svg className="w-4 h-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                    </svg>
-                    <input
-                        type="text"
-                        className="grow"
-                        placeholder="From location"
-                        value={fromLocation}
-                        onChange={(e) => setFromLocation(e.target.value)}
-                    />
-                </label>
+  const getTransportIcon = (type) => {
+    switch(type) {
+      case 'bus': return <FaBus className="text-blue-500" />;
+      case 'train': return <FaTrain className="text-green-500" />;
+      case 'plane': return <FaPlane className="text-red-500" />;
+      case 'launch': return <FaShip className="text-purple-500" />;
+      default: return <FaTicketAlt className="text-gray-500" />;
+    }
+  };
 
-                <label className="input input-bordered flex items-center gap-2">
-                    <svg className="w-4 h-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                    <input
-                        type="text"
-                        className="grow"
-                        placeholder="To location"
-                        value={toLocation}
-                        onChange={(e) => setToLocation(e.target.value)}
-                    />
-                </label>
-
-                <label className="input input-bordered flex items-center gap-2">
-                    <svg className="w-4 h-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"></path>
-                    </svg>
-                    <select
-                        className="grow"
-                        value={transportType}
-                        onChange={(e) => setTransportType(e.target.value)}
-                    >
-                        <option value="all">All Transport</option>
-                        <option value="bus">Bus</option>
-                        <option value="train">Train</option>
-                        <option value="plane">Plane</option>
-                    </select>
-                </label>
-
-                <label className="input input-bordered flex items-center gap-2">
-                    <svg className="w-4 h-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"></path>
-                    </svg>
-                    <select
-                        className="grow"
-                        value={sortOption}
-                        onChange={(e) => setSortOption(e.target.value)}
-                    >
-                        <option value="newest">Newest First</option>
-                        <option value="price-low">Price: Low to High</option>
-                        <option value="price-high">Price: High to Low</option>
-                    </select>
-                </label>
-
+  return (
+    <div className={`min-h-screen transition-all duration-300 ${
+      isDarkMode 
+        ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900' 
+        : 'bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50'
+    }`}>
+      <Container>
+        {/* Header Section */}
+        <div className={`mb-8 p-6 rounded-2xl shadow-xl transition-all duration-300 border ${
+          visibilityClasses.bg.card
+        } ${visibilityClasses.border.primary}`}>
+          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 mb-6">
+            <div className="flex items-center gap-4">
+              <div className={`p-4 rounded-2xl transition-all duration-300 ${
+                isDarkMode ? 'bg-gradient-to-br from-blue-900/50 to-indigo-900/50 border border-blue-800' : 'bg-gradient-to-br from-blue-100 to-indigo-100 border border-blue-200'
+              }`}>
+                <FaTicketAlt className={`text-3xl ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`} />
+              </div>
+              <div>
+                <h1 className={`text-2xl md:text-3xl font-bold ${visibilityClasses.text.primary}`}>
+                  All Tickets
+                </h1>
+                <p className={`mt-1 ${visibilityClasses.text.tertiary}`}>
+                  Find and book your perfect journey
+                </p>
+              </div>
             </div>
-            <Tickets searchText={searchText}
-                fromLocation={fromLocation}
-                toLocation={toLocation}
-                transportType={transportType}
-                sortOption={sortOption}>
-
-            </Tickets>
+            
+            {/* Quick Stats */}
+            <div className="flex items-center gap-4">
+              <div className={`stats shadow transition-colors duration-300 ${
+                isDarkMode ? 'bg-gray-700/50 border border-gray-600' : 'bg-white border border-gray-200'
+              }`}>
+                <div className="stat py-2 px-4">
+                  <div className={`stat-title text-xs ${visibilityClasses.text.tertiary}`}>
+                    Available
+                  </div>
+                  <div className={`stat-value text-lg ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`}>
+                    <FaTicketAlt className="inline mr-1" />
+                    Live
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-    );
+
+        {/* Advanced Filters Section */}
+        <div className={`mb-8 p-6 rounded-2xl shadow-lg transition-all duration-300 border ${
+          visibilityClasses.bg.card
+        } ${visibilityClasses.border.primary}`}>
+          <h3 className={`text-lg font-bold mb-4 flex items-center gap-2 ${visibilityClasses.text.primary}`}>
+            <FaFilter className={`${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`} />
+            Search & Filter Tickets
+          </h3>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+            {/* Search Input */}
+            <div className="relative">
+              <label className="label">
+                <span className={`label-text flex items-center gap-2 font-medium ${visibilityClasses.text.secondary}`}>
+                  <FaSearch className={visibilityClasses.text.tertiary} />
+                  Search Tickets
+                </span>
+              </label>
+              <input
+                type="search"
+                placeholder="Search by title, route, or vendor..."
+                className={`input input-bordered w-full transition-all duration-300 focus:scale-105 ${
+                  isDarkMode 
+                    ? 'bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-400 focus:border-blue-500' 
+                    : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-blue-500'
+                }`}
+                value={searchText}
+                onChange={(e) => setSearchText(e.target.value)}
+              />
+            </div>
+
+            {/* From Location */}
+            <div className="relative">
+              <label className="label">
+                <span className={`label-text flex items-center gap-2 font-medium ${visibilityClasses.text.secondary}`}>
+                  <FaMapMarkerAlt className={`${isDarkMode ? 'text-green-400' : 'text-green-600'}`} />
+                  From Location
+                </span>
+              </label>
+              <input
+                type="text"
+                placeholder="Departure city..."
+                className={`input input-bordered w-full transition-all duration-300 focus:scale-105 ${
+                  isDarkMode 
+                    ? 'bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-400 focus:border-green-500' 
+                    : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-green-500'
+                }`}
+                value={fromLocation}
+                onChange={(e) => setFromLocation(e.target.value)}
+              />
+            </div>
+
+            {/* To Location */}
+            <div className="relative">
+              <label className="label">
+                <span className={`label-text flex items-center gap-2 font-medium ${visibilityClasses.text.secondary}`}>
+                  <FaRoute className={`${isDarkMode ? 'text-purple-400' : 'text-purple-600'}`} />
+                  To Location
+                </span>
+              </label>
+              <input
+                type="text"
+                placeholder="Destination city..."
+                className={`input input-bordered w-full transition-all duration-300 focus:scale-105 ${
+                  isDarkMode 
+                    ? 'bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-400 focus:border-purple-500' 
+                    : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-purple-500'
+                }`}
+                value={toLocation}
+                onChange={(e) => setToLocation(e.target.value)}
+              />
+            </div>
+
+            {/* Transport Type */}
+            <div className="relative">
+              <label className="label">
+                <span className={`label-text flex items-center gap-2 font-medium ${visibilityClasses.text.secondary}`}>
+                  {getTransportIcon(transportType)}
+                  Transport Type
+                </span>
+              </label>
+              <select
+                className={`select select-bordered w-full transition-all duration-300 focus:scale-105 ${
+                  isDarkMode 
+                    ? 'bg-gray-700 border-gray-600 text-gray-100 focus:border-orange-500' 
+                    : 'bg-white border-gray-300 text-gray-900 focus:border-orange-500'
+                }`}
+                value={transportType}
+                onChange={(e) => setTransportType(e.target.value)}
+              >
+                <option value="all">All Transport Types</option>
+                <option value="bus">🚌 Bus</option>
+                <option value="train">🚂 Train</option>
+                <option value="plane">✈️ Plane</option>
+                <option value="launch">🚢 Launch</option>
+              </select>
+            </div>
+
+            {/* Sort Options */}
+            <div className="relative">
+              <label className="label">
+                <span className={`label-text flex items-center gap-2 font-medium ${visibilityClasses.text.secondary}`}>
+                  <FaSort className={`${isDarkMode ? 'text-yellow-400' : 'text-yellow-600'}`} />
+                  Sort By
+                </span>
+              </label>
+              <select
+                className={`select select-bordered w-full transition-all duration-300 focus:scale-105 ${
+                  isDarkMode 
+                    ? 'bg-gray-700 border-gray-600 text-gray-100 focus:border-yellow-500' 
+                    : 'bg-white border-gray-300 text-gray-900 focus:border-yellow-500'
+                }`}
+                value={sortOption}
+                onChange={(e) => setSortOption(e.target.value)}
+              >
+                <option value="newest">🆕 Newest First</option>
+                <option value="price-low">💰 Price: Low to High</option>
+                <option value="price-high">💎 Price: High to Low</option>
+                <option value="popular">🔥 Most Popular</option>
+                <option value="rating">⭐ Highest Rated</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Filter Summary */}
+          <div className="mt-4 flex flex-wrap gap-2">
+            {searchText && (
+              <span className={`badge gap-1 ${isDarkMode ? 'badge-outline border-blue-500 text-blue-400' : 'badge-outline border-blue-500 text-blue-600'}`}>
+                <FaSearch className="text-xs" />
+                Search: {searchText}
+              </span>
+            )}
+            {fromLocation && (
+              <span className={`badge gap-1 ${isDarkMode ? 'badge-outline border-green-500 text-green-400' : 'badge-outline border-green-500 text-green-600'}`}>
+                <FaMapMarkerAlt className="text-xs" />
+                From: {fromLocation}
+              </span>
+            )}
+            {toLocation && (
+              <span className={`badge gap-1 ${isDarkMode ? 'badge-outline border-purple-500 text-purple-400' : 'badge-outline border-purple-500 text-purple-600'}`}>
+                <FaRoute className="text-xs" />
+                To: {toLocation}
+              </span>
+            )}
+            {transportType !== 'all' && (
+              <span className={`badge gap-1 ${isDarkMode ? 'badge-outline border-orange-500 text-orange-400' : 'badge-outline border-orange-500 text-orange-600'}`}>
+                {getTransportIcon(transportType)}
+                {transportType.charAt(0).toUpperCase() + transportType.slice(1)}
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Tickets Section */}
+        <div className={`rounded-2xl shadow-lg transition-all duration-300 border ${
+          visibilityClasses.bg.card
+        } ${visibilityClasses.border.primary} overflow-hidden`}>
+          <div className={`p-4 border-b ${visibilityClasses.border.primary}`}>
+            <div className="flex items-center justify-between">
+              <h3 className={`text-lg font-bold flex items-center gap-2 ${visibilityClasses.text.primary}`}>
+                <FaTicketAlt className={`${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`} />
+                Available Tickets
+              </h3>
+              <button 
+                onClick={() => window.location.reload()}
+                className={`btn btn-sm gap-2 ${visibilityClasses.button.outline}`}
+              >
+                <FaSync className="text-sm" />
+                Refresh
+              </button>
+            </div>
+          </div>
+          
+          <div className="p-4">
+            <Tickets
+              searchText={searchText}
+              fromLocation={fromLocation}
+              toLocation={toLocation}
+              transportType={transportType}
+              sortOption={sortOption}
+            />
+          </div>
+        </div>
+      </Container>
+    </div>
+  );
 };
 
 export default AllTickets;

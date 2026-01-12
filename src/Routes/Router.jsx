@@ -34,6 +34,10 @@ import DashboardHome from "../Pages/Dashboard/DashboardHome/DashboardHome";
 import ProfileWrapper from "../Pages/Dashboard/Profile/ProfileWrapper.jsx";
 import UserRoute from "./UserRoute";
 import VendorRoute from "./VendorRoute";
+import About from "../Pages/About/About";
+import Contact from "../Pages/Contact/Contact";
+import AdminAnalytics from "../Pages/Dashboard/Admin/AdminAnalytics";
+import UserAnalytics from "../Pages/Dashboard/User/UserAnalytics";
 
 
 
@@ -69,8 +73,12 @@ export const router = createBrowserRouter([
                 element: <PaymentSuccess></PaymentSuccess>,
             },
             {
-                path: "become-vendor",
-                element: <BecomeVendor></BecomeVendor>,
+                path: 'about',
+                element: <About></About>,
+            },
+            {
+                path: 'contact',
+                element: <Contact></Contact>,
             },
         ]
     },
@@ -128,6 +136,16 @@ export const router = createBrowserRouter([
                     <TransactionHistory></TransactionHistory>,
                   
             },
+            {
+                path: "analytics",
+                element: <UserRoute>
+                    <UserAnalytics></UserAnalytics>
+                </UserRoute>,
+            },
+            {
+                path: "become-vendor",
+                element: <BecomeVendor></BecomeVendor>,
+            },
 
             // Vendor pages
             {
@@ -178,6 +196,12 @@ export const router = createBrowserRouter([
                 path: "advertise",
                 element: <AdminRoute>
                     <AdvertiseTickets></AdvertiseTickets>
+                </AdminRoute>,
+            },
+            {
+                path: "admin-analytics",
+                element: <AdminRoute>
+                    <AdminAnalytics></AdminAnalytics>
                 </AdminRoute>,
             },
 

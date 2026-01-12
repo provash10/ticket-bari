@@ -12,14 +12,24 @@ const useRole = () => {
         queryKey: ['user-role', user?.email],
         queryFn: async()=>{
             
+            // Temporary admin override for messi_afa2025@gmail.com ok
+            if (user?.email === 'messi_afa2025@gmail.com') {
+                return 'admin';
+            }
+            
             try{
-                const res =await axiosSecure.get(`/users/${user.email}/role`);
-            console.log('in the useRole', res.data);
-            return res.data?.role || 'user';
+                const res = await axiosSecure.get(`/users/${user.email}/role`);
+                return res.data?.role || 'user';
             }
             catch(error){
-                console.error(error);
-                return 'user';
+                // Fallback: try to get all users and find by email
+                try {
+                    const allUsersRes = await axiosSecure.get('/users');
+                    const currentUser = allUsersRes.data?.find(u => u.email === user.email);
+                    return currentUser?.role || 'user';
+                } catch (fallbackError) {
+                    return 'user';
+                }
             }
         },
          enabled: !loading && !!user?.email,
@@ -30,3 +40,4 @@ const useRole = () => {
 };
 
 export default useRole;
+

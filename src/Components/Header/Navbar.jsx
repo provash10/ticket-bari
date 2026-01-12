@@ -1,101 +1,141 @@
-import React, { useEffect, useState } from 'react';
-import { MdEmojiTransportation } from 'react-icons/md';
-import { Link, NavLink, useLocation, useNavigate } from 'react-router';
-import useAuth from '../../Hooks/useAuth';
-import toast from 'react-hot-toast';
+import React from "react";
+import { MdEmojiTransportation } from "react-icons/md";
+import { NavLink, Link, useNavigate } from "react-router";
+import useAuth from "../../Hooks/useAuth";
+import { useTheme } from "../../Contexts/ThemeContext";
+import toast from "react-hot-toast";
+import "./Navbar.css";
 
 const Navbar = () => {
-  const {user, logOut} = useAuth();
-   const navigate = useNavigate();
-    // const location = useLocation();
-    // console.log('after logout', location);
+  const { user, logOut } = useAuth();
+  const { isDarkMode, toggleTheme } = useTheme();
+  const navigate = useNavigate();
 
-  const handleLogOut=()=>{
+  const handleLogOut = () => {
     logOut()
-    .then(result=>{
-      toast.success("LogOut successful !!");
-      console.log(result.user)
-      //  navigate(location?.state || '/');
-      navigate('/');
-    })
-    .catch(error=>{
-      console.log(error)
-    })
-  }
+      .then(() => {
+        toast.success("Logout successful");
+        navigate("/");
+      })
+      .catch((error) => console.log(error));
+  };
 
-    const links = (
+  // common links
+  const publicLinks = (
     <>
-    {/* <NavLink to="/" className={({ isActive }) => isActive ? "font-bold active" : "font-bold"}>Home</NavLink>
-    <NavLink to="/all-tickets" className={({ isActive }) => isActive ? "font-bold active" : "font-bold"}>All Tickets</NavLink>
-    <NavLink to="/dashboard" className={({ isActive }) => isActive ? "font-bold active" : "font-bold"}>Dashboard</NavLink> */}
-
-      <li><NavLink to='/' className="font-bold">Home</NavLink></li>
-      <li><NavLink to='/all-tickets' className="font-bold">All Tickets</NavLink></li>
-      <li><NavLink to='/dashboard' className="font-bold">Dashboard</NavLink></li>
-      <li><NavLink to="become-vendor" className="font-bold">Become A Vendor</NavLink></li>
-      {/* <li><NavLink to="approved-vendors" className="font-bold">Approved Vendor</NavLink></li> */}
-      {/* <li><NavLink to="users-management" className="font-bold">User Management</NavLink></li> */}
-     
+      <li>
+        <NavLink to="/">Home</NavLink>
+      </li>
+      <li>
+        <NavLink to="/all-tickets">All Tickets</NavLink>
+      </li>
+      <li>
+        <NavLink to="/dashboard/become-vendor">Become Vendor</NavLink>
+      </li>
     </>
-  )
+  );
 
-  const [theme, setTheme] = useState(localStorage.getItem('theme') || "light")
+  const privateLinks = (
+    <>
+      <li>
+        <NavLink to="/dashboard">Dashboard</NavLink>
+      </li>
+      {/* <li>
+        <NavLink to="/my-bookings">My Bookings</NavLink>
+      </li> */}
+    </>
+  );
 
-  useEffect(() => {
-    const html = document.querySelector('html')
-     html.setAttribute("data-theme", theme)
-     localStorage.setItem("theme", theme)
-  }, [theme])
+  return (
+    <header className="navbar-wrapper">
+      <div className="navbar max-w-7xl mx-auto px-4">
+        {/* Left */}
+        <div className="navbar-start">
+          <div className="dropdown lg:hidden">
+            <label tabIndex={0} className="btn btn-ghost">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M4 6h16M4 12h8m-8 6h16"
+                />
+              </svg>
+            </label>
+            <ul
+              tabIndex={0}
+              className="menu dropdown-content mt-3 p-2 shadow bg-base-100 rounded-box w-52"
+            >
+              {publicLinks}
+              {user && privateLinks}
+            </ul>
+          </div>
 
+          <Link to="/" className="brand">
+            <MdEmojiTransportation size={22} />
+            <span>Ticket Bari</span>
+          </Link>
+        </div>
 
-  const handleTheme = (checked) => {
-    console.log(checked);
-   setTheme(checked? "dark" : "light")
-  }
+        {/* Center */}
+        <div className="navbar-center hidden lg:flex">
+          <ul className="menu menu-horizontal gap-2">
+            {publicLinks}
+            {user && privateLinks}
+          </ul>
+        </div>
 
+        {/* Right */}
+        <div className="navbar-end gap-3">
+          {/* theme toggle */}
+          <input
+            type="checkbox"
+            className="toggle"
+            onChange={toggleTheme}
+            checked={isDarkMode}
+          />
 
-    return (
-        <div className="navbar bg-base-100 shadow-sm">
-  <div className="navbar-start">
-    <div className="dropdown">
-      <div tabIndex={0} role="button" className="btn btn-ghost lg:hidden">
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"> <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h8m-8 6h16" /> </svg>
+          {!user ? (
+            <Link to="/auth/login" className="btn btn-primary rounded-full">
+              Login
+            </Link>
+          ) : (
+            <div className="dropdown dropdown-end">
+              <label tabIndex={0} className="avatar cursor-pointer">
+                <div className="w-9 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2">
+                  <img src={user.photoURL} alt="profile" />
+                </div>
+              </label>
+
+              <ul
+                tabIndex={0}
+                className="menu dropdown-content mt-3 p-3 shadow bg-base-100 rounded-box w-52"
+              >
+                <li className="font-semibold text-sm px-2">
+                  {user.displayName || "User"}
+                </li>
+                <li>
+                  <NavLink to="/dashboard">Dashboard</NavLink>
+                </li>
+                <li>
+                  <NavLink to="/profile">Profile</NavLink>
+                </li>
+                <li>
+                  <button onClick={handleLogOut}>Logout</button>
+                </li>
+              </ul>
+            </div>
+          )}
+        </div>
       </div>
-      <ul
-        tabIndex="-1"
-        className="menu menu-sm dropdown-content bg-base-100 rounded-box z-1 mt-3 w-52 p-2 shadow">
-        {links}
-      </ul>
-    </div>
-    <a className="btn btn-ghost text-xl"><MdEmojiTransportation />Ticket Bari</a>
-  </div>
-  <div className="navbar-center hidden lg:flex">
-    <ul className="menu menu-horizontal px-1">
-      {links}
-    </ul>
-  </div>
-  <div className="navbar-end flex items-center gap-2">
-    {/* dark-light */}
-             <input
-           onChange={(e)=> handleTheme(e.target.checked)}
-           type="checkbox"
-           defaultChecked={localStorage.getItem('theme') === "dark"}
-           className="toggle"/>
-    {/* <a className="btn">Login</a> */}
-    {
-      user? <>
-      {user.photoURL && (
-        <img 
-          src={user.photoURL} 
-          alt="User Profile" 
-          className="w-8 h-8 rounded-full border border-gray-700"
-        />
-      )} <a onClick={handleLogOut} className="btn">Logout</a></>
-       :  <Link to='/auth/login' className="btn">Login</Link>
-    }
-  </div>
-</div>
-    );
+    </header>
+  );
 };
 
 export default Navbar;

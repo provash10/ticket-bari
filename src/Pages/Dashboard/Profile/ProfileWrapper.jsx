@@ -26,13 +26,13 @@ const ProfileWrapper = () => {
 
     switch(role) {
         case 'admin':
-            return <AdminProfile user={user} role={role} />;
+            return <AdminProfile user={user} />;
         case 'vendor':
-            return <VendorProfile user={user} role={role} />;
+            return <VendorProfile user={user} />;
         case 'user':
-            return <UserProfile user={user} role={role} />;
+            return <UserProfile user={user} />;
         default:
-            return <UserProfile user={user} role={role} />;
+            return <UserProfile user={user} />;
     }
 };
 

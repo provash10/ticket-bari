@@ -14,7 +14,10 @@ const PaymentSuccess = () => {
     if (sessionId) {
       const verifyPayment = async () => {
         try {
-          const res = await axios.post(`${import.meta.env.VITE_API_URL}/payment-success`, { sessionId });
+          // const res = await axios.post(`${import.meta.env.VITE_API_URL}/payment-success`, { sessionId });
+          const res = await axios.get(`${import.meta.env.VITE_API_URL}/payment-success`, {
+  params: { session_id: sessionId }
+});
           console.log("Payment verified:", res.data);
           setStatus('success');
         } catch (err) {
